@@ -1,6 +1,7 @@
 {
   "extends": [
-    "../.eslintrc.json"
+    "react-app",
+    "react-app/jest"
   ],
   "env": {
     "browser": true,

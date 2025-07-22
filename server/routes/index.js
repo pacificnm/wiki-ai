@@ -1,5 +1,6 @@
 import express from 'express';
 import authRoutes from './authRoutes.js';
+import categoryRoutes from './categoryRoutes.js';
 import errorRoutes from './errorRoutes.js';
 
 const router = express.Router();
@@ -38,6 +39,13 @@ router.use('/auth', authRoutes);
  * @route /api/errors/*
  */
 router.use('/errors', errorRoutes);
+
+/**
+ * Category management routes.
+ *
+ * @route /api/categories/*
+ */
+router.use('/categories', categoryRoutes);
 
 /**
  * Admin routes (when implemented).

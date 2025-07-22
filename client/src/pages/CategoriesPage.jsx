@@ -11,73 +11,110 @@ import {
   CardActions,
   CardContent,
   Chip,
+  CircularProgress,
   Fab,
   Grid,
   LinearProgress,
   Paper,
   Typography
 } from '@mui/material';
-import React from 'react';
+import { useCategories } from '../hooks/useCategories.js';
+
+
+/**
+ * Generate a color for a category based on its name
+ * @param {string} name - Category name
+ * @returns {string} Hex color
+ */
+const getCategoryColor = (name) => {
+  const colors = [
+    '#1976d2', '#388e3c', '#f57c00', '#7b1fa2', 
+    '#d32f2f', '#455a64', '#00796b', '#5d4037',
+    '#616161', '#e91e63', '#9c27b0', '#3f51b5'
+  ];
+  
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  return colors[Math.abs(hash) % colors.length];
+};
+
+/**
+ * Generate an icon for a category based on its name
+ * @param {string} name - Category name
+ * @returns {string} Emoji icon
+ */
+const getCategoryIcon = (name) => {
+  const iconMap = {
+    tutorial: '📚',
+    guide: '📋',
+    guideline: '📋',
+    reference: '📖',
+    faq: '❓',
+    documentation: '🔧',
+    meeting: '📝',
+    note: '📝',
+    policy: '�',
+    procedure: '⚙️',
+    help: '❓',
+    support: '🆘',
+    knowledge: '🧠',
+    resource: '📦',
+    template: '📋',
+    example: '💡',
+  };
+  
+  const lowerName = name.toLowerCase();
+  for (const [key, icon] of Object.entries(iconMap)) {
+    if (lowerName.includes(key)) {
+      return icon;
+    }
+  }
+  
+  return '📁'; // Default folder icon
+};
+
+/**
+ * Format relative time
+ * @param {string|Date} date - Date to format
+ * @returns {string} Relative time string
+ */
+const getRelativeTime = (date) => {
+  if (!date) return 'No recent activity';
+  
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now - past;
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMinutes < 60) {
+    return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+  } else {
+    return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+  }
+};
 
 function CategoriesPage() {
-  const [categories] = React.useState([
-    {
-      id: 1,
-      name: 'Tutorial',
-      description: 'Step-by-step guides and tutorials',
-      documentCount: 15,
-      color: '#1976d2',
-      icon: '📚',
-      recentActivity: '2 hours ago'
-    },
-    {
-      id: 2,
-      name: 'Guidelines',
-      description: 'Best practices and guidelines for the team',
-      documentCount: 8,
-      color: '#388e3c',
-      icon: '📋',
-      recentActivity: '1 day ago'
-    },
-    {
-      id: 3,
-      name: 'Reference',
-      description: 'Quick reference materials and documentation',
-      documentCount: 23,
-      color: '#f57c00',
-      icon: '📖',
-      recentActivity: '3 hours ago'
-    },
-    {
-      id: 4,
-      name: 'FAQ',
-      description: 'Frequently asked questions and answers',
-      documentCount: 12,
-      color: '#7b1fa2',
-      icon: '❓',
-      recentActivity: '5 hours ago'
-    },
-    {
-      id: 5,
-      name: 'Documentation',
-      description: 'Technical documentation and specifications',
-      documentCount: 31,
-      color: '#d32f2f',
-      icon: '🔧',
-      recentActivity: '30 minutes ago'
-    },
-    {
-      id: 6,
-      name: 'Meeting Notes',
-      description: 'Meeting summaries and action items',
-      documentCount: 7,
-      color: '#455a64',
-      icon: '📝',
-      recentActivity: '2 days ago'
-    }
-  ]);
+  const { categories, loading, stats } = useCategories();
 
-  const totalDocuments = categories.reduce((sum, cat) => sum + cat.documentCount, 0);
+  // Calculate stats from categories data
+  const totalDocuments = stats?.totalDocuments || categories.reduce((sum, cat) => sum + (cat.documentCount || 0), 0);
+  const totalCategories = stats?.totalCategories || categories.length;
+  const avgDocumentsPerCategory = totalCategories > 0 ? Math.round(totalDocuments / totalCategories) : 0;
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -98,7 +135,7 @@ function CategoriesPage() {
           <Grid item xs={12} sm={4}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h3" color="primary">
-                {categories.length}
+                {totalCategories}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Total Categories
@@ -118,7 +155,7 @@ function CategoriesPage() {
           <Grid item xs={12} sm={4}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h3" color="primary">
-                {Math.round(totalDocuments / categories.length)}
+                {avgDocumentsPerCategory}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Avg. per Category
@@ -128,81 +165,103 @@ function CategoriesPage() {
         </Grid>
       </Paper>
 
-      <Grid container spacing={3}>
-        {categories.map((category) => (
-          <Grid item xs={12} md={6} lg={4} key={category.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                  <Avatar
-                    sx={{
-                      bgcolor: category.color,
-                      width: 48,
-                      height: 48,
-                      mr: 2,
-                      fontSize: '1.5rem'
-                    }}
-                  >
-                    {category.icon}
-                  </Avatar>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" component="h2">
-                      {category.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {category.description}
-                    </Typography>
-                  </Box>
-                </Box>
+      {categories.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+            No categories found
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Get started by creating your first category to organize your documents.
+          </Typography>
+          <Button variant="contained" color="primary" startIcon={<AddIcon />}>
+            Create Category
+          </Button>
+        </Paper>
+      ) : (
+        <Grid container spacing={3}>
+          {categories.map((category) => {
+            const color = getCategoryColor(category.name);
+            const icon = getCategoryIcon(category.name);
+            const documentCount = category.documentCount || 0;
+            const maxDocuments = Math.max(...categories.map(c => c.documentCount || 0));
+            const recentActivity = getRelativeTime(category.updatedAt);
 
-                <Box sx={{ mb: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Documents
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {category.documentCount}
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={(category.documentCount / Math.max(...categories.map(c => c.documentCount))) * 100}
-                    sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: 'grey.200',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: category.color
-                      }
-                    }}
-                  />
-                </Box>
+            return (
+              <Grid item xs={12} md={6} lg={4} key={category._id || category.id}>
+                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                      <Avatar
+                        sx={{
+                          bgcolor: color,
+                          width: 48,
+                          height: 48,
+                          mr: 2,
+                          fontSize: '1.5rem'
+                        }}
+                      >
+                        {icon}
+                      </Avatar>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6" component="h2">
+                          {category.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {category.description || 'No description provided'}
+                        </Typography>
+                      </Box>
+                    </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Chip
-                    icon={<ArticleIcon />}
-                    label={`${category.documentCount} docs`}
-                    size="small"
-                    variant="outlined"
-                  />
-                  <Typography variant="caption" color="text.secondary">
-                    Updated {category.recentActivity}
-                  </Typography>
-                </Box>
-              </CardContent>
+                    <Box sx={{ mb: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Documents
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {documentCount}
+                        </Typography>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={maxDocuments > 0 ? (documentCount / maxDocuments) * 100 : 0}
+                        sx={{
+                          height: 6,
+                          borderRadius: 3,
+                          backgroundColor: 'grey.200',
+                          '& .MuiLinearProgress-bar': {
+                            backgroundColor: color
+                          }
+                        }}
+                      />
+                    </Box>
 
-              <CardActions>
-                <Button size="small" color="primary" startIcon={<FolderIcon />}>
-                  View Documents
-                </Button>
-                <Button size="small">
-                  Edit
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Chip
+                        icon={<ArticleIcon />}
+                        label={`${documentCount} docs`}
+                        size="small"
+                        variant="outlined"
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        Updated {recentActivity}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+
+                  <CardActions>
+                    <Button size="small" color="primary" startIcon={<FolderIcon />}>
+                      View Documents
+                    </Button>
+                    <Button size="small">
+                      Edit
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
     </Box>
   );
 }
