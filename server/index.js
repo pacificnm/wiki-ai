@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 import { logger, morganStream } from './middleware/logger.js';
 import { errorHandler, AppError } from './middleware/error.js';
 import { initializeFirebase } from './config/firebase.js';
+import { connectToDatabase, initializeDatabase } from './config/database.js';
 import routes from './routes/index.js';
 
 // 3. Init and config
@@ -55,14 +56,10 @@ async function startServer() {
     app.use(errorHandler);
 
     // 10. MongoDB connection
-    // 10. MongoDB connection
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      dbName: process.env.MONGO_DB_NAME || 'knowledgebase',
-    });
+    await connectToDatabase();
+    await initializeDatabase();
     
-    logger.info('MongoDB connected successfully');
+    logger.info('Database connected and initialized successfully');
 
     // 11. Start server
     app.listen(PORT, () => {
