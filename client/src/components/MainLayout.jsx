@@ -1,6 +1,18 @@
-import React, { useState, useContext } from 'react';
-import PropTypes from 'prop-types';
-import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Menu as MenuIcon,
+  Category as CategoryIcon,
+  Description as DescriptionIcon,
+  People as PeopleIcon,
+  Dashboard as DashboardIcon,
+  Settings as SettingsIcon,
+  Logout as LogoutIcon,
+  Person as PersonIcon,
+  Favorite as FavoriteIcon,
+  Search as SearchIcon,
+  Add as AddIcon,
+  Brightness4 as DarkModeIcon,
+  Brightness7 as LightModeIcon
+} from '@mui/icons-material';
 import {
   AppBar,
   Box,
@@ -18,26 +30,13 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Badge,
   Tooltip,
   useTheme,
   useMediaQuery
 } from '@mui/material';
-import {
-  Menu as MenuIcon,
-  Category as CategoryIcon,
-  Description as DescriptionIcon,
-  People as PeopleIcon,
-  Dashboard as DashboardIcon,
-  Settings as SettingsIcon,
-  Logout as LogoutIcon,
-  Person as PersonIcon,
-  Favorite as FavoriteIcon,
-  Search as SearchIcon,
-  Add as AddIcon,
-  Brightness4 as DarkModeIcon,
-  Brightness7 as LightModeIcon
-} from '@mui/icons-material';
+import PropTypes from 'prop-types';
+import { useState, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { ThemeContext } from '../contexts/ThemeContext';
 
@@ -50,10 +49,10 @@ const MainLayout = ({ children }) => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   const { user, logout, loading } = useContext(AuthContext);
   const { toggleColorMode, mode } = useContext(ThemeContext);
-  
+
   const open = Boolean(anchorEl);
 
   const handleDrawerToggle = () => {
@@ -82,51 +81,51 @@ const MainLayout = ({ children }) => {
   };
 
   const menuItems = [
-    { 
-      text: 'Dashboard', 
-      icon: <DashboardIcon />, 
+    {
+      text: 'Dashboard',
+      icon: <DashboardIcon />,
       path: '/dashboard',
       roles: ['user', 'editor', 'admin']
     },
-    { 
-      text: 'Documents', 
-      icon: <DescriptionIcon />, 
+    {
+      text: 'Documents',
+      icon: <DescriptionIcon />,
       path: '/documents',
       roles: ['user', 'editor', 'admin']
     },
-    { 
-      text: 'Categories', 
-      icon: <CategoryIcon />, 
+    {
+      text: 'Categories',
+      icon: <CategoryIcon />,
       path: '/categories',
       roles: ['user', 'editor', 'admin']
     },
-    { 
-      text: 'My Favorites', 
-      icon: <FavoriteIcon />, 
+    {
+      text: 'My Favorites',
+      icon: <FavoriteIcon />,
       path: '/favorites',
       roles: ['user', 'editor', 'admin']
     },
-    { 
-      text: 'Search', 
-      icon: <SearchIcon />, 
+    {
+      text: 'Search',
+      icon: <SearchIcon />,
       path: '/search',
       roles: ['user', 'editor', 'admin']
     },
-    { 
-      text: 'Users', 
-      icon: <PeopleIcon />, 
+    {
+      text: 'Users',
+      icon: <PeopleIcon />,
       path: '/admin/users',
       roles: ['admin']
     },
-    { 
-      text: 'Settings', 
-      icon: <SettingsIcon />, 
+    {
+      text: 'Settings',
+      icon: <SettingsIcon />,
       path: '/admin/settings',
       roles: ['admin']
     }
   ];
 
-  const filteredMenuItems = menuItems.filter(item => 
+  const filteredMenuItems = menuItems.filter(item =>
     !item.roles || item.roles.includes(user?.role)
   );
 
@@ -141,7 +140,7 @@ const MainLayout = ({ children }) => {
         </Box>
       </Toolbar>
       <Divider />
-      
+
       {/* Quick Actions */}
       <Box sx={{ p: 2 }}>
         <Tooltip title="Create New Document">
@@ -153,7 +152,7 @@ const MainLayout = ({ children }) => {
               width: '100%',
               borderRadius: 2,
               '&:hover': {
-                backgroundColor: 'primary.dark',
+                backgroundColor: 'primary.dark'
               }
             }}
           >
@@ -162,9 +161,9 @@ const MainLayout = ({ children }) => {
           </IconButton>
         </Tooltip>
       </Box>
-      
+
       <Divider />
-      
+
       {/* Navigation Menu */}
       <List>
         {filteredMenuItems.map((item) => (
@@ -179,17 +178,17 @@ const MainLayout = ({ children }) => {
                   backgroundColor: 'primary.light',
                   color: 'primary.contrastText',
                   '&:hover': {
-                    backgroundColor: 'primary.main',
+                    backgroundColor: 'primary.main'
                   }
                 }
               }}
             >
-              <ListItemIcon sx={{ 
-                color: location.pathname === item.path ? 'inherit' : 'text.primary' 
+              <ListItemIcon sx={{
+                color: location.pathname === item.path ? 'inherit' : 'text.primary'
               }}>
                 {item.icon}
               </ListItemIcon>
-              <ListItemText 
+              <ListItemText
                 primary={item.text}
                 primaryTypographyProps={{
                   fontWeight: location.pathname === item.path ? 'bold' : 'normal'
@@ -204,12 +203,12 @@ const MainLayout = ({ children }) => {
 
   if (loading) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '100vh' 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh'
         }}
       >
         <Typography>Loading...</Typography>
@@ -222,9 +221,9 @@ const MainLayout = ({ children }) => {
       <CssBaseline />
 
       {/* Top App Bar */}
-      <AppBar 
-        position="fixed" 
-        sx={{ 
+      <AppBar
+        position="fixed"
+        sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           backgroundColor: 'background.paper',
           color: 'text.primary',
@@ -243,7 +242,7 @@ const MainLayout = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          
+
           {/* Mobile Logo */}
           <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', flexGrow: 1 }}>
             <CategoryIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -274,18 +273,18 @@ const MainLayout = ({ children }) => {
               </Avatar>
             </IconButton>
           </Tooltip>
-          
-          <Menu 
-            anchorEl={anchorEl} 
-            open={open} 
+
+          <Menu
+            anchorEl={anchorEl}
+            open={open}
             onClose={handleMenuClose}
             anchorOrigin={{
               vertical: 'bottom',
-              horizontal: 'right',
+              horizontal: 'right'
             }}
             transformOrigin={{
               vertical: 'top',
-              horizontal: 'right',
+              horizontal: 'right'
             }}
           >
             <MenuItem disabled sx={{ opacity: 1 }}>
@@ -332,32 +331,32 @@ const MainLayout = ({ children }) => {
             open={mobileOpen}
             onClose={handleDrawerToggle}
             ModalProps={{
-              keepMounted: true, // Better mobile performance
+              keepMounted: true // Better mobile performance
             }}
             sx={{
               display: { xs: 'block', md: 'none' },
-              '& .MuiDrawer-paper': { 
-                boxSizing: 'border-box', 
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
                 width: drawerWidth,
                 backgroundColor: 'background.default'
-              },
+              }
             }}
           >
             {drawer}
           </Drawer>
-          
+
           {/* Desktop drawer */}
           <Drawer
             variant="permanent"
             sx={{
               display: { xs: 'none', md: 'block' },
-              '& .MuiDrawer-paper': { 
-                boxSizing: 'border-box', 
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
                 width: drawerWidth,
                 backgroundColor: 'background.default',
                 borderRight: '1px solid',
                 borderRightColor: 'divider'
-              },
+              }
             }}
             open
           >
@@ -368,11 +367,11 @@ const MainLayout = ({ children }) => {
         {/* Main Content */}
         <Box
           component="main"
-          sx={{ 
-            flexGrow: 1, 
-            p: 3, 
-            overflowY: 'auto', 
-            display: 'flex', 
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            overflowY: 'auto',
+            display: 'flex',
             flexDirection: 'column',
             minHeight: 0 // Important for scrolling
           }}

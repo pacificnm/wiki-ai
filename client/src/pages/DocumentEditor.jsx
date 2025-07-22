@@ -39,7 +39,7 @@ function DocumentEditor() {
 
   const handleSave = () => {
     // TODO: Implement save functionality
-    console.log('Saving document:', { title, content, category, tags });
+    //console.log('Saving document:', { title, content, category, tags });
   };
 
   return (

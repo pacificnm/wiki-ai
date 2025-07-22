@@ -22,13 +22,13 @@ router.get('/profile', authenticateToken, async (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: user
     });
   } catch (error) {
     logger.error('Error fetching user profile', { error: error.message, userId: req.user?.uid });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to fetch user profile'
     });
@@ -73,14 +73,14 @@ router.post('/register', authenticateToken, async (req, res) => {
 
     logger.info('New user registered', { userId: newUser.id, email });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: newUser,
       message: 'User registered successfully'
     });
   } catch (error) {
     logger.error('Error registering user', { error: error.message, body: req.body });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to register user'
     });

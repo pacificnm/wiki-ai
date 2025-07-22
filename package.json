@@ -9,8 +9,12 @@
     "start": "node server/index.js",
     "stop": "kill-port 3000 5000",
     "build": "cd client && npm run build",
-    "lint": "eslint . --ext .js,.jsx",
+    "lint": "eslint . --ext .js,.jsx --max-warnings 0",
+    "lint:fix": "eslint . --ext .js,.jsx --fix",
+    "lint:client": "cd client && eslint src --ext .js,.jsx",
+    "lint:server": "cd server && eslint . --ext .js",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "server": "nodemon server/index.js",
     "client": "cd client && npm start",
     "test:firebase": "node scripts/test-firebase.js",
@@ -34,9 +38,13 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@eslint/js": "^9.31.0",
     "concurrently": "^8.2.0",
     "eslint": "^8.49.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "kill-port": "^2.0.1",
     "nodemon": "^3.0.1",
     "prettier": "^3.1.0"

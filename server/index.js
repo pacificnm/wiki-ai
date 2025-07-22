@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 5000;
 
 /**
  * Start the server with proper async initialization.
- * 
+ *
  * @async
  * @function startServer
  * @returns {Promise<void>}

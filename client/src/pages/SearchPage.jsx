@@ -127,7 +127,7 @@ function SearchPage() {
               <InputAdornment position="start">
                 <SearchIcon />
               </InputAdornment>
-            ),
+            )
           }}
           sx={{ mb: 2 }}
         />
@@ -180,7 +180,7 @@ function SearchPage() {
         <Grid item xs={12} md={8}>
           {searchTerm && (
             <Typography variant="body1" sx={{ mb: 2 }}>
-              Found <strong>{sortedResults.length}</strong> results for "{searchTerm}"
+              Found <strong>{sortedResults.length}</strong> results for &quot;{searchTerm}&quot;
             </Typography>
           )}
 

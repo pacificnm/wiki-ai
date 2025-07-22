@@ -1,6 +1,6 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { connectToDatabase } from '../server/config/database.js';
 import { logger } from '../server/middleware/logger.js';
@@ -36,7 +36,7 @@ async function checkDatabase() {
     console.log('\n📋 Sample Categories:');
     console.log('─'.repeat(40));
     const categories = await Category.find().select('name description').limit(5);
-    
+
     if (categories.length > 0) {
       categories.forEach(cat => {
         console.log(`📁 ${cat.name}: ${cat.description}`);
@@ -48,7 +48,7 @@ async function checkDatabase() {
     console.log('\n📋 Sample Users:');
     console.log('─'.repeat(40));
     const users = await User.find().select('email displayName role createdAt').limit(5);
-    
+
     if (users.length > 0) {
       users.forEach(user => {
         console.log(`👤 ${user.displayName || user.email} (${user.role}) - ${user.createdAt.toISOString().split('T')[0]}`);

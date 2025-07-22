@@ -22,7 +22,7 @@ import React from 'react';
 
 /**
  * Error boundary component to catch and display React errors.
- * 
+ *
  * @component
  * @example
  * <ErrorBoundary>
@@ -42,7 +42,7 @@ class ErrorBoundary extends React.Component {
 
   /**
    * Static method called when an error occurs.
-   * 
+   *
    * @static
    * @param {Error} error - The error that was thrown
    * @returns {Object} New state object
@@ -57,7 +57,7 @@ class ErrorBoundary extends React.Component {
 
   /**
    * Component lifecycle method called when an error occurs.
-   * 
+   *
    * @param {Error} error - The error that was thrown
    * @param {Object} errorInfo - Component stack trace information
    */
@@ -79,7 +79,7 @@ class ErrorBoundary extends React.Component {
 
   /**
    * Log error to external monitoring service.
-   * 
+   *
    * @param {Error} error - The error that was thrown
    * @param {Object} errorInfo - Component stack trace information
    */
@@ -145,7 +145,7 @@ class ErrorBoundary extends React.Component {
 
   /**
    * Get user-friendly error message based on error type.
-   * 
+   *
    * @returns {string} User-friendly error message
    */
   getUserFriendlyMessage = () => {
@@ -171,7 +171,7 @@ class ErrorBoundary extends React.Component {
 
   /**
    * Get error category for styling and icons.
-   * 
+   *
    * @returns {Object} Error category information
    */
   getErrorCategory = () => {

@@ -3,12 +3,12 @@ import { logger } from '../middleware/logger.js';
 
 /**
  * Initialize Firebase Admin SDK with environment variables.
- * 
+ *
  * @async
  * @function initializeFirebase
  * @throws {Error} When Firebase configuration is invalid
  * @returns {Promise<void>}
- * 
+ *
  * @example
  * // In server/index.js
  * import { initializeFirebase } from './config/firebase.js';
@@ -40,10 +40,10 @@ export async function initializeFirebase() {
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
       }),
       databaseURL: process.env.FIREBASE_DATABASE_URL,
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET
     };
 
     admin.initializeApp(firebaseConfig);
@@ -51,7 +51,7 @@ export async function initializeFirebase() {
     logger.info('Firebase Admin SDK initialized successfully', {
       projectId: process.env.FIREBASE_PROJECT_ID,
       hasDatabase: !!process.env.FIREBASE_DATABASE_URL,
-      hasStorage: !!process.env.FIREBASE_STORAGE_BUCKET,
+      hasStorage: !!process.env.FIREBASE_STORAGE_BUCKET
     });
 
   } catch (error) {
@@ -65,11 +65,11 @@ export async function initializeFirebase() {
 
 /**
  * Get Firebase Auth instance.
- * 
+ *
  * @function getAuth
  * @returns {admin.auth.Auth} Firebase Auth instance
  * @throws {Error} When Firebase is not initialized
- * 
+ *
  * @example
  * import { getAuth } from './config/firebase.js';
  * const auth = getAuth();
@@ -84,11 +84,11 @@ export function getAuth() {
 
 /**
  * Get Firebase Firestore instance.
- * 
+ *
  * @function getFirestore
  * @returns {admin.firestore.Firestore} Firestore instance
  * @throws {Error} When Firebase is not initialized
- * 
+ *
  * @example
  * import { getFirestore } from './config/firebase.js';
  * const db = getFirestore();
@@ -103,11 +103,11 @@ export function getFirestore() {
 
 /**
  * Get Firebase Storage instance.
- * 
+ *
  * @function getStorage
  * @returns {admin.storage.Storage} Storage instance
  * @throws {Error} When Firebase is not initialized
- * 
+ *
  * @example
  * import { getStorage } from './config/firebase.js';
  * const storage = getStorage();
@@ -122,16 +122,16 @@ export function getStorage() {
 
 /**
  * Verify Firebase ID token and return decoded token.
- * 
+ *
  * @async
  * @function verifyIdToken
  * @param {string} idToken - Firebase ID token from client
  * @returns {Promise<admin.auth.DecodedIdToken>} Decoded token with user information
  * @throws {Error} When token is invalid or expired
- * 
+ *
  * @example
  * import { verifyIdToken } from './config/firebase.js';
- * 
+ *
  * try {
  *   const decodedToken = await verifyIdToken(clientToken);
  *   console.log('User ID:', decodedToken.uid);
@@ -154,16 +154,16 @@ export async function verifyIdToken(idToken) {
 
 /**
  * Get user data from Firebase Auth by UID.
- * 
+ *
  * @async
  * @function getUserById
  * @param {string} uid - User UID
  * @returns {Promise<admin.auth.UserRecord>} User record
  * @throws {Error} When user is not found
- * 
+ *
  * @example
  * import { getUserById } from './config/firebase.js';
- * 
+ *
  * const user = await getUserById('user-uid-here');
  * console.log('User email:', user.email);
  */
@@ -183,7 +183,7 @@ export async function getUserById(uid) {
 
 /**
  * Set custom claims for a user (for role-based access).
- * 
+ *
  * @async
  * @function setCustomClaims
  * @param {string} uid - User UID
@@ -191,10 +191,10 @@ export async function getUserById(uid) {
  * @param {string} [claims.role] - User role (admin, user, etc.)
  * @returns {Promise<void>}
  * @throws {Error} When operation fails
- * 
+ *
  * @example
  * import { setCustomClaims } from './config/firebase.js';
- * 
+ *
  * // Make user an admin
  * await setCustomClaims('user-uid', { role: 'admin' });
  */
@@ -215,7 +215,7 @@ export async function setCustomClaims(uid, claims) {
 
 /**
  * Create a new user in the system.
- * 
+ *
  * @async
  * @function createUser
  * @param {Object} userData - User data
@@ -260,7 +260,7 @@ export async function createUser(userData) {
 
 /**
  * Update user data.
- * 
+ *
  * @async
  * @function updateUser
  * @param {string} firebaseUid - Firebase UID

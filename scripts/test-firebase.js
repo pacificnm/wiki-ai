@@ -1,42 +1,40 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
 /**
  * Script to test Firebase authentication setup.
- * 
+ *
  * Usage: node scripts/test-firebase.js
  */
 
-import { initializeFirebase, getAuth, verifyIdToken } from '../server/config/firebase.js';
-import { logger } from '../server/middleware/logger.js';
 import dotenv from 'dotenv';
+import { initializeFirebase, getAuth, verifyIdToken } from '../server/config/firebase.js';
 
 // Load environment variables
 dotenv.config();
 
 /**
  * Test Firebase initialization and configuration.
- * 
+ *
  * @async
  * @function testFirebaseSetup
  * @returns {Promise<boolean>} True if all tests pass
  */
 async function testFirebaseSetup() {
-  console.log('🧪 Testing Firebase Setup...\n');
-  
   let allTestsPassed = true;
-  
+
   try {
     // Test 1: Environment Variables
-    console.log('1️⃣ Checking environment variables...');
-    
+
+
     const requiredVars = [
       'FIREBASE_PROJECT_ID',
-      'FIREBASE_CLIENT_EMAIL', 
+      'FIREBASE_CLIENT_EMAIL',
       'FIREBASE_PRIVATE_KEY'
     ];
-    
+
     const missingVars = requiredVars.filter(varName => !process.env[varName]);
-    
+
     if (missingVars.length > 0) {
       console.log('❌ Missing environment variables:', missingVars.join(', '));
       allTestsPassed = false;
@@ -46,26 +44,26 @@ async function testFirebaseSetup() {
       console.log(`   📧 Client Email: ${process.env.FIREBASE_CLIENT_EMAIL}`);
       console.log(`   🔑 Private Key: ${process.env.FIREBASE_PRIVATE_KEY ? 'Set (hidden)' : 'Not set'}`);
     }
-    
+
     // Test 2: Firebase Initialization
     console.log('\n2️⃣ Testing Firebase initialization...');
-    
+
     await initializeFirebase();
     console.log('✅ Firebase Admin SDK initialized successfully');
-    
+
     // Test 3: Auth Service
     console.log('\n3️⃣ Testing Auth service...');
-    
+
     const auth = getAuth();
     console.log('✅ Firebase Auth service is accessible');
-    
+
     // Test 4: List first few users (if any)
     console.log('\n4️⃣ Checking for existing users...');
-    
+
     try {
       const listUsersResult = await auth.listUsers(3); // Get first 3 users
       console.log(`✅ Found ${listUsersResult.users.length} users in the project`);
-      
+
       if (listUsersResult.users.length > 0) {
         console.log('   👥 Sample users:');
         listUsersResult.users.forEach((user, index) => {
@@ -80,26 +78,26 @@ async function testFirebaseSetup() {
     } catch (error) {
       console.log(`⚠️  Could not list users: ${error.message}`);
     }
-    
+
     // Test 5: Optional services
     console.log('\n5️⃣ Checking optional services...');
-    
+
     if (process.env.FIREBASE_DATABASE_URL) {
       console.log(`✅ Realtime Database URL configured: ${process.env.FIREBASE_DATABASE_URL}`);
     } else {
       console.log('ℹ️  Realtime Database URL not configured (optional)');
     }
-    
+
     if (process.env.FIREBASE_STORAGE_BUCKET) {
       console.log(`✅ Storage Bucket configured: ${process.env.FIREBASE_STORAGE_BUCKET}`);
     } else {
       console.log('ℹ️  Storage Bucket not configured (optional)');
     }
-    
+
   } catch (error) {
     console.log(`❌ Error during testing: ${error.message}`);
     allTestsPassed = false;
-    
+
     // Provide specific troubleshooting advice
     if (error.message.includes('private_key')) {
       console.log('\n🔍 Troubleshooting private key issues:');
@@ -116,7 +114,7 @@ async function testFirebaseSetup() {
       console.log('2. It should end with @your-project.iam.gserviceaccount.com');
     }
   }
-  
+
   // Final results
   console.log('\n📋 Test Results:');
   if (allTestsPassed) {
@@ -132,13 +130,13 @@ async function testFirebaseSetup() {
     console.log('- Environment Variables: wiki-ai.wiki/Env.md');
     console.log('- Firebase Console: https://console.firebase.google.com/');
   }
-  
+
   return allTestsPassed;
 }
 
 /**
  * Test token verification (if token is provided).
- * 
+ *
  * @async
  * @function testTokenVerification
  * @param {string} token - Firebase ID token
@@ -146,7 +144,7 @@ async function testFirebaseSetup() {
  */
 async function testTokenVerification(token) {
   console.log('\n🔐 Testing token verification...');
-  
+
   try {
     const decodedToken = await verifyIdToken(token);
     console.log('✅ Token verification successful!');
@@ -166,23 +164,23 @@ async function testTokenVerification(token) {
 
 /**
  * Main function.
- * 
+ *
  * @async
  * @function main
  * @returns {Promise<void>}
  */
 async function main() {
   const token = process.argv[2]; // Optional token argument
-  
+
   try {
     const setupPassed = await testFirebaseSetup();
-    
+
     if (setupPassed && token) {
       await testTokenVerification(token);
     }
-    
+
     process.exit(setupPassed ? 0 : 1);
-    
+
   } catch (error) {
     console.error('❌ Unexpected error:', error);
     process.exit(1);
@@ -190,7 +188,7 @@ async function main() {
 }
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   console.error('❌ Unhandled Promise Rejection:', reason);
   process.exit(1);
 });

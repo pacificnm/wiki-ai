@@ -1,8 +1,8 @@
-import React, { useContext } from 'react';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
+import { useContext } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-import { Box, CircularProgress, Typography } from '@mui/material';
 
 const PrivateRoute = ({ children, requireAdmin = false }) => {
   const { user, loading, isAuthenticated, isAdmin } = useContext(AuthContext);
@@ -53,7 +53,7 @@ const PrivateRoute = ({ children, requireAdmin = false }) => {
           Access Denied
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          You don't have permission to access this page. Admin privileges are required.
+          You don&apos;t have permission to access this page. Admin privileges are required.
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Current role: {user?.role || 'Unknown'}

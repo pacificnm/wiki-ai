@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { connectToDatabase, initializeDatabase } from '../server/config/database.js';
 import { logger } from '../server/middleware/logger.js';
 
@@ -111,7 +111,7 @@ async function createAdminUser() {
     logger.info('1. Create a user in Firebase Console');
     logger.info('2. Get the Firebase UID');
     logger.info('3. Run: npm run make:admin <firebase-uid> <email>');
-    
+
   } catch (error) {
     logger.warn('Failed to create admin user', { error: error.message });
   }

@@ -70,7 +70,7 @@ function DocumentsPage() {
               <InputAdornment position="start">
                 <SearchIcon />
               </InputAdornment>
-            ),
+            )
           }}
         />
       </Paper>

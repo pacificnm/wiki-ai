@@ -3,14 +3,14 @@ import { useCallback, useState } from 'react';
 
 /**
  * Custom hook for handling errors in React components.
- * 
+ *
  * @function useError
  * @returns {Object} Error handling utilities
- * 
+ *
  * @example
  * function MyComponent() {
  *   const { handleError, clearError, error, isError } = useError();
- *   
+ *
  *   const fetchData = async () => {
  *     try {
  *       const data = await api.getData();
@@ -27,7 +27,7 @@ export function useError() {
 
   /**
    * Handle an error with optional user message.
-   * 
+   *
    * @function handleError
    * @param {Error|string} err - Error object or message
    * @param {string} [userMessage] - User-friendly message to display
@@ -84,7 +84,7 @@ export function useError() {
 
   /**
    * Clear the current error.
-   * 
+   *
    * @function clearError
    */
   const clearError = useCallback(() => {
@@ -93,15 +93,15 @@ export function useError() {
 
   /**
    * Handle async operations with automatic error handling.
-   * 
+   *
    * @function handleAsync
    * @param {Function} asyncFn - Async function to execute
    * @param {string} [userMessage] - User-friendly error message
    * @returns {Promise} Promise that resolves with result or handles error
-   * 
+   *
    * @example
    * const { handleAsync } = useError();
-   * 
+   *
    * const result = await handleAsync(
    *   () => api.getData(),
    *   'Failed to load data'
@@ -129,7 +129,7 @@ export function useError() {
 
 /**
  * Convert technical errors to user-friendly messages.
- * 
+ *
  * @function getUserFriendlyMessage
  * @param {Error|string} error - Error to convert
  * @returns {string} User-friendly message
@@ -181,7 +181,7 @@ function getUserFriendlyMessage(error) {
 
 /**
  * Send error information to monitoring service.
- * 
+ *
  * @function sendToErrorService
  * @param {Object} errorObj - Error object to send
  */
@@ -225,7 +225,7 @@ function sendToErrorService(errorObj) {
 
 /**
  * Hook for handling API errors specifically.
- * 
+ *
  * @function useApiError
  * @returns {Object} API error handling utilities
  */
@@ -234,7 +234,7 @@ export function useApiError() {
 
   /**
    * Handle API response errors.
-   * 
+   *
    * @function handleApiError
    * @param {Response|Error} response - Fetch response or error
    * @param {string} [context] - Context of the API call

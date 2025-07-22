@@ -1,6 +1,6 @@
-import winston from 'winston';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import winston from 'winston';
 
 // Get current directory for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 /**
  * Custom log format for console output.
- * 
+ *
  * @type {winston.Logform.Format}
  */
 const consoleFormat = winston.format.combine(
@@ -19,12 +19,12 @@ const consoleFormat = winston.format.combine(
   winston.format.colorize({ all: true }),
   winston.format.printf(({ timestamp, level, message, stack, ...meta }) => {
     let log = `${timestamp} [${level}]: ${message}`;
-    
+
     // Add stack trace for errors
     if (stack) {
       log += `\n${stack}`;
     }
-    
+
     // Add metadata if present
     const metaStr = Object.keys(meta).length ? `\n${JSON.stringify(meta, null, 2)}` : '';
     return log + metaStr;
@@ -33,7 +33,7 @@ const consoleFormat = winston.format.combine(
 
 /**
  * File log format - structured JSON for production parsing.
- * 
+ *
  * @type {winston.Logform.Format}
  */
 const fileFormat = winston.format.combine(
@@ -44,13 +44,13 @@ const fileFormat = winston.format.combine(
 
 /**
  * Create transports based on environment.
- * 
+ *
  * @function createTransports
  * @returns {winston.transport[]} Array of winston transports
  */
 function createTransports() {
   const transports = [];
-  
+
   // Console transport (always enabled)
   transports.push(
     new winston.transports.Console({
@@ -60,11 +60,11 @@ function createTransports() {
       handleRejections: true
     })
   );
-  
+
   // File transports for production
   if (process.env.NODE_ENV === 'production') {
     const logDir = path.join(__dirname, '../../logs');
-    
+
     // Combined log file (all levels)
     transports.push(
       new winston.transports.File({
@@ -77,7 +77,7 @@ function createTransports() {
         handleRejections: true
       })
     );
-    
+
     // Error log file (errors only)
     transports.push(
       new winston.transports.File({
@@ -91,13 +91,13 @@ function createTransports() {
       })
     );
   }
-  
+
   return transports;
 }
 
 /**
  * Winston logger instance.
- * 
+ *
  * @type {winston.Logger}
  */
 export const logger = winston.createLogger({
@@ -112,13 +112,13 @@ export const logger = winston.createLogger({
 
 /**
  * Stream interface for Morgan HTTP logger.
- * 
+ *
  * @type {Object}
  */
 export const morganStream = {
   /**
    * Write method for Morgan stream interface.
-   * 
+   *
    * @function write
    * @param {string} message - Log message from Morgan
    * @returns {void}
@@ -135,7 +135,7 @@ export const morganStream = {
 export const log = {
   /**
    * Log info level message with optional metadata.
-   * 
+   *
    * @function info
    * @param {string} message - Log message
    * @param {Object} [meta={}] - Additional metadata
@@ -143,11 +143,11 @@ export const log = {
    * @param {string} [meta.requestId] - Request ID for tracing
    * @param {string} [meta.module] - Module/component name
    * @returns {void}
-   * 
+   *
    * @example
-   * log.info('User logged in successfully', { 
-   *   userId: 'abc123', 
-   *   module: 'auth' 
+   * log.info('User logged in successfully', {
+   *   userId: 'abc123',
+   *   module: 'auth'
    * });
    */
   info(message, meta = {}) {
@@ -160,7 +160,7 @@ export const log = {
 
   /**
    * Log error with stack trace and context.
-   * 
+   *
    * @function error
    * @param {string|Error} error - Error message or Error object
    * @param {Object} [meta={}] - Additional metadata
@@ -169,7 +169,7 @@ export const log = {
    * @param {string} [meta.module] - Module/component name
    * @param {string} [meta.action] - Action being performed when error occurred
    * @returns {void}
-   * 
+   *
    * @example
    * log.error(new Error('Database connection failed'), {
    *   module: 'database',
@@ -180,7 +180,7 @@ export const log = {
   error(error, meta = {}) {
     const errorMessage = error instanceof Error ? error.message : error;
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     logger.error(errorMessage, {
       ...meta,
       stack: errorStack,
@@ -191,16 +191,16 @@ export const log = {
 
   /**
    * Log warning message.
-   * 
+   *
    * @function warn
    * @param {string} message - Warning message
    * @param {Object} [meta={}] - Additional metadata
    * @returns {void}
-   * 
+   *
    * @example
-   * log.warn('API rate limit approaching', { 
-   *   userId: 'abc123', 
-   *   currentRate: 95 
+   * log.warn('API rate limit approaching', {
+   *   userId: 'abc123',
+   *   currentRate: 95
    * });
    */
   warn(message, meta = {}) {
@@ -213,16 +213,16 @@ export const log = {
 
   /**
    * Log debug information (only in development).
-   * 
+   *
    * @function debug
    * @param {string} message - Debug message
    * @param {Object} [meta={}] - Additional metadata
    * @returns {void}
-   * 
+   *
    * @example
-   * log.debug('Cache hit for user data', { 
-   *   userId: 'abc123', 
-   *   cacheKey: 'user:abc123' 
+   * log.debug('Cache hit for user data', {
+   *   userId: 'abc123',
+   *   cacheKey: 'user:abc123'
    * });
    */
   debug(message, meta = {}) {
@@ -237,19 +237,19 @@ export const log = {
 
   /**
    * Log HTTP request information.
-   * 
+   *
    * @function http
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    * @param {string} [action] - Action description
    * @returns {void}
-   * 
+   *
    * @example
    * log.http(req, res, 'User profile updated');
    */
   http(req, res, action = '') {
     const duration = res.locals.startTime ? Date.now() - res.locals.startTime : 0;
-    
+
     logger.info(`${req.method} ${req.originalUrl} ${res.statusCode}`, {
       method: req.method,
       url: req.originalUrl,
@@ -265,7 +265,7 @@ export const log = {
 
   /**
    * Log authentication events.
-   * 
+   *
    * @function auth
    * @param {string} event - Authentication event type
    * @param {Object} [meta={}] - Additional metadata
@@ -273,10 +273,10 @@ export const log = {
    * @param {string} [meta.email] - User email
    * @param {string} [meta.ip] - IP address
    * @returns {void}
-   * 
+   *
    * @example
-   * log.auth('login_success', { 
-   *   userId: 'abc123', 
+   * log.auth('login_success', {
+   *   userId: 'abc123',
    *   email: 'user@example.com',
    *   ip: '192.168.1.1'
    * });
@@ -292,7 +292,7 @@ export const log = {
 
   /**
    * Log database operations.
-   * 
+   *
    * @function db
    * @param {string} operation - Database operation
    * @param {Object} [meta={}] - Additional metadata
@@ -300,10 +300,10 @@ export const log = {
    * @param {string} [meta.query] - Query information
    * @param {number} [meta.duration] - Operation duration in ms
    * @returns {void}
-   * 
+   *
    * @example
-   * log.db('find', { 
-   *   collection: 'documents', 
+   * log.db('find', {
+   *   collection: 'documents',
    *   query: 'findById',
    *   duration: 45
    * });
@@ -320,11 +320,11 @@ export const log = {
 
 /**
  * Create request-scoped logger with consistent metadata.
- * 
+ *
  * @function createRequestLogger
  * @param {Object} req - Express request object
  * @returns {Object} Request-scoped logger
- * 
+ *
  * @example
  * // In middleware or route handler
  * const reqLogger = createRequestLogger(req);
@@ -352,33 +352,33 @@ export function createRequestLogger(req) {
 
 /**
  * Middleware to add request timing and logging.
- * 
+ *
  * @function requestLogger
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Express next function
  * @returns {void}
- * 
+ *
  * @example
  * app.use(requestLogger);
  */
 export function requestLogger(req, res, next) {
   // Set start time for duration calculation
   res.locals.startTime = Date.now();
-  
+
   // Create request-scoped logger
   req.logger = createRequestLogger(req);
-  
+
   // Log request start
   req.logger.debug('Request started');
-  
+
   // Override res.end to log completion
   const originalEnd = res.end;
   res.end = function(...args) {
     req.logger.http('Request completed');
     originalEnd.apply(this, args);
   };
-  
+
   next();
 }
 

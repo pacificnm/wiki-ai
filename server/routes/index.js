@@ -6,13 +6,13 @@ const router = express.Router();
 
 /**
  * Main API routes.
- * 
+ *
  * @namespace Routes
  */
 
 /**
  * Health check endpoint.
- * 
+ *
  * @route GET /api/health
  * @access Public
  */
@@ -27,35 +27,35 @@ router.get('/health', (req, res) => {
 
 /**
  * Authentication routes.
- * 
+ *
  * @route /api/auth/*
  */
 router.use('/auth', authRoutes);
 
 /**
  * Error logging and management routes.
- * 
+ *
  * @route /api/errors/*
  */
 router.use('/errors', errorRoutes);
 
 /**
  * Admin routes (when implemented).
- * 
+ *
  * @route /api/admin/*
  */
 // router.use('/admin', adminRoutes);
 
 /**
  * User routes (when implemented).
- * 
+ *
  * @route /api/user/*
  */
 // router.use('/user', userRoutes);
 
 /**
  * Catch-all route for undefined API endpoints.
- * 
+ *
  * @route * /api/*
  */
 router.use('*', (req, res) => {

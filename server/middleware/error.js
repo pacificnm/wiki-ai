@@ -2,14 +2,14 @@ import { logger } from './logger.js';
 
 /**
  * Custom error class for application errors.
- * 
+ *
  * @class AppError
  * @extends Error
  */
 export class AppError extends Error {
   /**
    * Create an application error.
-   * 
+   *
    * @param {string} message - Error message
    * @param {number} statusCode - HTTP status code
    * @param {string} [code] - Error code for client handling
@@ -17,7 +17,7 @@ export class AppError extends Error {
    */
   constructor(message, statusCode = 500, code = null, meta = {}) {
     super(message);
-    
+
     this.name = 'AppError';
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
@@ -25,21 +25,21 @@ export class AppError extends Error {
     this.code = code;
     this.meta = meta;
     this.timestamp = new Date().toISOString();
-    
+
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
 /**
  * Validation error class.
- * 
+ *
  * @class ValidationError
  * @extends AppError
  */
 export class ValidationError extends AppError {
   /**
    * Create a validation error.
-   * 
+   *
    * @param {string} message - Error message
    * @param {Object} [errors={}] - Validation errors object
    */
@@ -51,14 +51,14 @@ export class ValidationError extends AppError {
 
 /**
  * Authentication error class.
- * 
+ *
  * @class AuthenticationError
  * @extends AppError
  */
 export class AuthenticationError extends AppError {
   /**
    * Create an authentication error.
-   * 
+   *
    * @param {string} [message='Authentication required'] - Error message
    */
   constructor(message = 'Authentication required') {
@@ -69,14 +69,14 @@ export class AuthenticationError extends AppError {
 
 /**
  * Authorization error class.
- * 
+ *
  * @class AuthorizationError
  * @extends AppError
  */
 export class AuthorizationError extends AppError {
   /**
    * Create an authorization error.
-   * 
+   *
    * @param {string} [message='Insufficient permissions'] - Error message
    */
   constructor(message = 'Insufficient permissions') {
@@ -87,14 +87,14 @@ export class AuthorizationError extends AppError {
 
 /**
  * Not found error class.
- * 
+ *
  * @class NotFoundError
  * @extends AppError
  */
 export class NotFoundError extends AppError {
   /**
    * Create a not found error.
-   * 
+   *
    * @param {string} [message='Resource not found'] - Error message
    * @param {string} [resource] - Resource type that wasn't found
    */
@@ -106,14 +106,14 @@ export class NotFoundError extends AppError {
 
 /**
  * Database error class.
- * 
+ *
  * @class DatabaseError
  * @extends AppError
  */
 export class DatabaseError extends AppError {
   /**
    * Create a database error.
-   * 
+   *
    * @param {string} message - Error message
    * @param {Object} [meta={}] - Additional metadata
    */
@@ -125,14 +125,14 @@ export class DatabaseError extends AppError {
 
 /**
  * Rate limit error class.
- * 
+ *
  * @class RateLimitError
  * @extends AppError
  */
 export class RateLimitError extends AppError {
   /**
    * Create a rate limit error.
-   * 
+   *
    * @param {string} [message='Too many requests'] - Error message
    * @param {number} [retryAfter=60] - Seconds to wait before retrying
    */
@@ -144,7 +144,7 @@ export class RateLimitError extends AppError {
 
 /**
  * Handle different types of errors and convert to AppError.
- * 
+ *
  * @function handleError
  * @param {Error} err - The error to handle
  * @returns {AppError} Standardized application error
@@ -155,7 +155,7 @@ function handleError(err) {
   // MongoDB duplicate key error
   if (err.code === 11000) {
     const message = 'Duplicate field value entered';
-    error = new ValidationError(message, { 
+    error = new ValidationError(message, {
       field: Object.keys(err.keyValue)[0],
       value: Object.values(err.keyValue)[0]
     });
@@ -204,7 +204,7 @@ function handleError(err) {
 
 /**
  * Send error response in development mode.
- * 
+ *
  * @function sendErrorDev
  * @param {AppError} err - Application error
  * @param {Object} req - Express request object
@@ -247,7 +247,7 @@ function sendErrorDev(err, req, res) {
 
 /**
  * Send error response in production mode.
- * 
+ *
  * @function sendErrorProd
  * @param {AppError} err - Application error
  * @param {Object} req - Express request object
@@ -295,22 +295,22 @@ function sendErrorProd(err, req, res) {
 
 /**
  * Global error handling middleware.
- * 
+ *
  * @function errorHandler
  * @param {Error} err - The error that occurred
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Express next function
  * @returns {void}
- * 
+ *
  * @example
  * // Add to Express app (must be last middleware)
  * app.use(errorHandler);
  */
-export function errorHandler(err, req, res, next) {
+export function errorHandler(err, req, res) {
   // Convert error to AppError if needed
   let error = err instanceof AppError ? err : handleError(err);
-  
+
   // Ensure error is an AppError instance
   if (!(error instanceof AppError)) {
     error = new AppError(
@@ -340,13 +340,13 @@ export function errorHandler(err, req, res, next) {
 
 /**
  * Handle 404 errors for undefined routes.
- * 
+ *
  * @function notFound
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Express next function
  * @returns {void}
- * 
+ *
  * @example
  * // Add before error handler
  * app.use(notFound);
@@ -362,11 +362,11 @@ export function notFound(req, res, next) {
 
 /**
  * Async error wrapper to catch promise rejections.
- * 
+ *
  * @function asyncHandler
  * @param {Function} fn - Async function to wrap
  * @returns {Function} Express middleware function
- * 
+ *
  * @example
  * // Wrap async route handlers
  * app.get('/users', asyncHandler(async (req, res) => {
@@ -382,20 +382,20 @@ export function asyncHandler(fn) {
 
 /**
  * Validation middleware factory.
- * 
+ *
  * @function validate
  * @param {Function} schema - Validation schema function
  * @param {string} [source='body'] - Request source to validate (body, params, query)
  * @returns {Function} Express middleware function
- * 
+ *
  * @example
  * import { z } from 'zod';
- * 
+ *
  * const userSchema = z.object({
  *   email: z.string().email(),
  *   name: z.string().min(1)
  * });
- * 
+ *
  * app.post('/users', validate(userSchema), createUser);
  */
 export function validate(schema, source = 'body') {
@@ -411,7 +411,7 @@ export function validate(schema, source = 'body') {
           acc[err.path.join('.')] = err.message;
           return acc;
         }, {});
-        
+
         next(new ValidationError('Validation failed', validationErrors));
       } else {
         next(new ValidationError(error.message));
@@ -428,7 +428,7 @@ process.on('uncaughtException', (err) => {
     error: err.message,
     stack: err.stack
   });
-  
+
   process.exit(1);
 });
 
@@ -438,7 +438,7 @@ process.on('unhandledRejection', (reason, promise) => {
     stack: reason instanceof Error ? reason.stack : undefined,
     promise: promise
   });
-  
+
   process.exit(1);
 });
 

@@ -35,7 +35,7 @@ class ClientLogger {
         fetch(`${serverUrl}/api/logs`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             level,
@@ -45,9 +45,9 @@ class ClientLogger {
               ...data,
               userAgent: navigator.userAgent,
               url: window.location.href,
-              timestamp: new Date().toISOString(),
-            },
-          }),
+              timestamp: new Date().toISOString()
+            }
+          })
         }).catch(() => {
           // Silently fail if logging to server fails
         });

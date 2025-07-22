@@ -1,34 +1,30 @@
-import React, { useState, useEffect, useContext } from 'react';
 import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
-  Chip,
-  IconButton,
+  Add as AddIcon,
+  Category as CategoryIcon,
+  Description as DocumentIcon,
+  Edit as EditIcon,
+  TrendingUp as TrendingIcon,
+  Visibility as ViewIcon
+} from '@mui/icons-material';
+import {
   Avatar,
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Chip,
   Divider,
+  Grid,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction
+  Typography
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Description as DocumentIcon,
-  Category as CategoryIcon,
-  People as PeopleIcon,
-  Favorite as FavoriteIcon,
-  Visibility as ViewIcon,
-  Edit as EditIcon,
-  TrendingUp as TrendingIcon
-} from '@mui/icons-material';
-import { AuthContext } from '../contexts/AuthContext';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -49,7 +45,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // TODO: Replace with actual API calls
       // Simulated data for now
       setTimeout(() => {
@@ -81,7 +77,7 @@ const Dashboard = () => {
             }
           ]
         });
-        
+
         setRecentDocuments([
           {
             id: 1,
@@ -111,7 +107,7 @@ const Dashboard = () => {
             viewCount: 32
           }
         ]);
-        
+
         setLoading(false);
       }, 1000);
     } catch (error) {
@@ -124,7 +120,7 @@ const Dashboard = () => {
     const now = new Date();
     const time = new Date(timestamp);
     const diffInSeconds = Math.floor((now - time) / 1000);
-    
+
     if (diffInSeconds < 60) return 'Just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
@@ -161,7 +157,7 @@ const Dashboard = () => {
           Welcome back, {user?.displayName || user?.email}! 👋
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Here's what's happening in your wiki today.
+          Here&apos;s what&apos;s happening in your wiki today.
         </Typography>
       </Box>
 
@@ -184,7 +180,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -202,7 +198,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -220,7 +216,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -257,7 +253,7 @@ const Dashboard = () => {
                   New Document
                 </Button>
               </Box>
-              
+
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {recentDocuments.map((doc) => (
                   <Card key={doc.id} variant="outlined">
@@ -268,11 +264,11 @@ const Dashboard = () => {
                         </Typography>
                         <Chip label={doc.category} size="small" color="primary" variant="outlined" />
                       </Box>
-                      
+
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         {doc.description}
                       </Typography>
-                      
+
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="caption" color="text.secondary">
                           By {doc.author} • {formatTimeAgo(doc.updatedAt)}
@@ -296,7 +292,7 @@ const Dashboard = () => {
                   </Card>
                 ))}
               </Box>
-              
+
               <Box sx={{ mt: 2, textAlign: 'center' }}>
                 <Button onClick={() => navigate('/documents')}>
                   View All Documents
@@ -313,7 +309,7 @@ const Dashboard = () => {
               <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
                 Recent Activity
               </Typography>
-              
+
               <List sx={{ width: '100%' }}>
                 {stats.recentActivity.map((activity, index) => (
                   <React.Fragment key={activity.id}>

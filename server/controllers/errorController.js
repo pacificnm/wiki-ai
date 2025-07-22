@@ -1,10 +1,10 @@
-import { logger } from '../middleware/logger.js';
-import { AppError } from '../middleware/error.js';
 import { z } from 'zod';
+import { AppError } from '../middleware/error.js';
+import { logger } from '../middleware/logger.js';
 
 /**
  * Schema for client error reports.
- * 
+ *
  * @type {z.ZodSchema}
  */
 const clientErrorSchema = z.object({
@@ -23,19 +23,19 @@ const clientErrorSchema = z.object({
 
 /**
  * Controller for handling client-side error reports.
- * 
+ *
  * @class ErrorController
  */
 export class ErrorController {
   /**
    * Log client-side errors.
-   * 
+   *
    * @async
    * @function logClientError
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    * @returns {Promise<void>}
-   * 
+   *
    * @example
    * POST /api/errors
    * {
@@ -48,10 +48,10 @@ export class ErrorController {
   static async logClientError(req, res) {
     try {
       const errorData = clientErrorSchema.parse(req.body);
-      
+
       // Extract user information if available
       const userId = req.user?.uid || errorData.userId || 'anonymous';
-      
+
       // Create structured log entry
       const logEntry = {
         message: `Client Error: ${errorData.message}`,
@@ -108,7 +108,7 @@ export class ErrorController {
           requestBody: req.body,
           ip: req.ip
         });
-        
+
         throw new AppError('Invalid error report format', 400, 'VALIDATION_ERROR', {
           errors: error.errors
         });
@@ -127,7 +127,7 @@ export class ErrorController {
 
   /**
    * Get error statistics (admin only).
-   * 
+   *
    * @async
    * @function getErrorStats
    * @param {Object} req - Express request object
@@ -138,7 +138,7 @@ export class ErrorController {
     try {
       // This is a placeholder - in production you'd query your log aggregation service
       // or database where you store error statistics
-      
+
       const stats = {
         totalErrors: 0,
         errorsByType: {
@@ -157,7 +157,7 @@ export class ErrorController {
       // - Elasticsearch/LogStash
       // - MongoDB aggregation pipeline
       // - Your monitoring service API
-      
+
       res.json({
         success: true,
         data: stats
@@ -176,7 +176,7 @@ export class ErrorController {
 
   /**
    * Clear old error logs (admin only).
-   * 
+   *
    * @async
    * @function clearOldErrors
    * @param {Object} req - Express request object
@@ -219,7 +219,7 @@ export class ErrorController {
 
   /**
    * Test error logging endpoint.
-   * 
+   *
    * @async
    * @function testError
    * @param {Object} req - Express request object
@@ -229,35 +229,24 @@ export class ErrorController {
   static async testError(req, res) {
     const { type = 'error' } = req.query;
 
-    try {
-      switch (type) {
-        case 'error':
-          throw new Error('Test error for monitoring');
-          
-        case 'validation':
-          throw new AppError('Test validation error', 400, 'VALIDATION_ERROR');
-          
-        case 'auth':
-          throw new AppError('Test authentication error', 401, 'AUTH_ERROR');
-          
-        case 'permission':
-          throw new AppError('Test permission error', 403, 'PERMISSION_ERROR');
-          
-        case 'notfound':
-          throw new AppError('Test not found error', 404, 'NOT_FOUND');
-          
-        case 'server':
-          throw new AppError('Test server error', 500, 'SERVER_ERROR');
-          
-        default:
-          res.json({
-            success: true,
-            message: 'No error thrown - test endpoint is working'
-          });
-      }
-    } catch (error) {
-      // Let the error middleware handle it
-      throw error;
+    switch (type) {
+      case 'error':
+        throw new Error('Test error for monitoring');
+      case 'validation':
+        throw new AppError('Test validation error', 400, 'VALIDATION_ERROR');
+      case 'auth':
+        throw new AppError('Test authentication error', 401, 'AUTH_ERROR');
+      case 'permission':
+        throw new AppError('Test permission error', 403, 'PERMISSION_ERROR');
+      case 'notfound':
+        throw new AppError('Test not found error', 404, 'NOT_FOUND');
+      case 'server':
+        throw new AppError('Test server error', 500, 'SERVER_ERROR');
+      default:
+        res.json({
+          success: true,
+          message: 'No error thrown - test endpoint is working'
+        });
     }
   }
 }

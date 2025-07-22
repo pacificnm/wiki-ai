@@ -1,5 +1,4 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Google as GoogleIcon, Category as LogoIcon } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -12,8 +11,9 @@ import {
   Divider,
   Link
 } from '@mui/material';
-import { Google as GoogleIcon, Category as LogoIcon } from '@mui/icons-material';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword } from 'firebase/auth';
+import React, { useState, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import { AuthContext } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
@@ -24,11 +24,11 @@ const LoginPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const from = location.state?.from?.pathname || '/dashboard';
 
   // Redirect if already logged in
@@ -51,7 +51,7 @@ const LoginPage = () => {
         await signInWithEmailAndPassword(auth, email, password);
         logger.info('User signed in with email/password');
       }
-      
+
       navigate(from, { replace: true });
     } catch (err) {
       logger.error('Email/password auth error', { error: err.message });
@@ -103,9 +103,9 @@ const LoginPage = () => {
           <Typography variant="h4" component="h2" align="center" gutterBottom>
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </Typography>
-          
+
           <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 4 }}>
-            {isSignUp 
+            {isSignUp
               ? 'Sign up to create your wiki account'
               : 'Sign in to access your wiki'
             }
@@ -129,7 +129,7 @@ const LoginPage = () => {
               sx={{ mb: 2 }}
               disabled={loading}
             />
-            
+
             <TextField
               fullWidth
               label="Password"
@@ -140,7 +140,7 @@ const LoginPage = () => {
               sx={{ mb: 3 }}
               disabled={loading}
             />
-            
+
             <Button
               type="submit"
               fullWidth
@@ -179,7 +179,7 @@ const LoginPage = () => {
           {/* Toggle between Sign In and Sign Up */}
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              {isSignUp ? 'Already have an account?' : 'Don\'t have an account?'}{' '}
               <Link
                 component="button"
                 variant="body2"

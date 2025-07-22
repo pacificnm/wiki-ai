@@ -1,0 +1,40 @@
+{
+  "extends": [
+    "../.eslintrc.json"
+  ],
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "jest": true
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    // Override or add client-specific rules
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
+    "react/jsx-filename-extension": [
+      "warn",
+      {
+        "extensions": [
+          ".jsx"
+        ]
+      }
+    ]
+  },
+  "ignorePatterns": [
+    "build/",
+    "public/",
+    "src/serviceWorker.js"
+  ]
+}

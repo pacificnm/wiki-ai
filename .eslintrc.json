@@ -1,0 +1,193 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true,
+    "jest": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:jsx-a11y/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings"
+  ],
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": [
+    "react",
+    "react-hooks",
+    "jsx-a11y",
+    "import"
+  ],
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "import/resolver": {
+      "node": {
+        "extensions": [
+          ".js",
+          ".jsx",
+          ".ts",
+          ".tsx"
+        ],
+        "paths": [
+          "client/node_modules",
+          "node_modules"
+        ]
+      }
+    }
+  },
+  "rules": {
+    // React specific rules
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "warn",
+    "react/jsx-uses-react": "off",
+    "react/jsx-uses-vars": "error",
+    "react/no-unused-prop-types": "warn",
+    "react/no-unused-state": "warn",
+    "react/jsx-key": "error",
+    "react/jsx-no-duplicate-props": "error",
+    "react/jsx-no-undef": "error",
+    "react/jsx-pascal-case": "warn",
+    "react/no-direct-mutation-state": "error",
+    "react/no-typos": "error",
+    "react/require-render-return": "error",
+    "react/style-prop-object": "error",
+    // React Hooks rules
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    // General JavaScript rules
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-duplicate-imports": "error",
+    "no-unused-expressions": "warn",
+    "no-var": "error",
+    "prefer-const": "warn",
+    "prefer-arrow-callback": "warn",
+    "arrow-spacing": "warn",
+    "no-trailing-spaces": "warn",
+    "no-multiple-empty-lines": [
+      "warn",
+      {
+        "max": 2
+      }
+    ],
+    "comma-dangle": [
+      "warn",
+      "never"
+    ],
+    "semi": [
+      "warn",
+      "always"
+    ],
+    "quotes": [
+      "warn",
+      "single",
+      {
+        "allowTemplateLiterals": true
+      }
+    ],
+    "indent": [
+      "warn",
+      2,
+      {
+        "SwitchCase": 1
+      }
+    ],
+    "object-curly-spacing": [
+      "warn",
+      "always"
+    ],
+    "array-bracket-spacing": [
+      "warn",
+      "never"
+    ],
+    "eol-last": "warn",
+    // Import rules
+    "import/no-unresolved": "off", // Disable for monorepo setup
+    "import/order": [
+      "warn",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "newlines-between": "never",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
+    ],
+    "import/no-unused-modules": "warn",
+    "import/no-duplicates": "error",
+    "import/newline-after-import": "warn",
+    // Accessibility rules
+    "jsx-a11y/alt-text": "warn",
+    "jsx-a11y/anchor-has-content": "warn",
+    "jsx-a11y/anchor-is-valid": "warn",
+    "jsx-a11y/click-events-have-key-events": "warn",
+    "jsx-a11y/no-static-element-interactions": "warn"
+  },
+  "ignorePatterns": [
+    "build/",
+    "dist/",
+    "node_modules/",
+    "coverage/",
+    "*.min.js",
+    "public/"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "client/**/*.{js,jsx}"
+      ],
+      "rules": {
+        "no-console": [
+          "warn",
+          {
+            "allow": [
+              "warn",
+              "error"
+            ]
+          }
+        ],
+        "react/jsx-filename-extension": [
+          "warn",
+          {
+            "extensions": [
+              ".jsx"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "server/**/*.js"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
+}

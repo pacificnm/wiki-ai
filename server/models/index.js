@@ -1,8 +1,8 @@
-import User from './User.js';
-import Document from './Document.js';
-import Version from './Version.js';
 import Category from './Category.js';
 import Comment from './Comment.js';
+import Document from './Document.js';
+import User from './User.js';
+import Version from './Version.js';
 
 export {
   User,

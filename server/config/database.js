@@ -3,13 +3,13 @@ import { logger } from '../middleware/logger.js';
 
 /**
  * MongoDB connection configuration and utilities.
- * 
+ *
  * @module config/database
  */
 
 /**
  * MongoDB connection options optimized for MongoDB Atlas.
- * 
+ *
  * @constant {Object} connectionOptions
  */
 const connectionOptions = {
@@ -24,7 +24,7 @@ const connectionOptions = {
 
 /**
  * Database connection state.
- * 
+ *
  * @type {Object}
  */
 export const dbState = {
@@ -37,15 +37,15 @@ export const dbState = {
 
 /**
  * Connect to MongoDB with retry logic.
- * 
+ *
  * @async
  * @function connectToDatabase
  * @param {string} [uri] - MongoDB connection URI (defaults to env variable)
  * @param {string} [dbName] - Database name (defaults to env variable)
  * @returns {Promise<mongoose.Connection>} MongoDB connection
- * 
+ *
  * @throws {Error} When connection fails after max retries
- * 
+ *
  * @example
  * await connectToDatabase();
  * // or with custom URI
@@ -117,7 +117,7 @@ export async function connectToDatabase(uri = null, dbName = null) {
       if (attemptNumber < dbState.maxRetries) {
         const retryDelay = Math.min(1000 * Math.pow(2, attemptNumber), 30000); // Exponential backoff, max 30s
         logger.info(`Retrying MongoDB connection in ${retryDelay}ms...`);
-        
+
         await new Promise(resolve => setTimeout(resolve, retryDelay));
         return connectWithRetry(attemptNumber + 1);
       } else {
@@ -132,11 +132,11 @@ export async function connectToDatabase(uri = null, dbName = null) {
 
 /**
  * Disconnect from MongoDB.
- * 
+ *
  * @async
  * @function disconnectFromDatabase
  * @returns {Promise<void>}
- * 
+ *
  * @example
  * await disconnectFromDatabase();
  */
@@ -159,18 +159,18 @@ export async function disconnectFromDatabase() {
 
 /**
  * Check database connection health.
- * 
+ *
  * @async
  * @function checkDatabaseHealth
  * @returns {Promise<Object>} Database health information
- * 
+ *
  * @example
  * const health = await checkDatabaseHealth();
  * console.log(health.status); // 'connected' | 'disconnected' | 'error'
  */
 export async function checkDatabaseHealth() {
   try {
-    const connection = mongoose.connection;
+    const { connection } = mongoose;
     const isConnected = connection.readyState === 1;
 
     if (!isConnected) {
@@ -205,11 +205,11 @@ export async function checkDatabaseHealth() {
 
 /**
  * Get database statistics.
- * 
+ *
  * @async
  * @function getDatabaseStats
  * @returns {Promise<Object>} Database statistics
- * 
+ *
  * @example
  * const stats = await getDatabaseStats();
  * console.log(stats.collections); // Number of collections
@@ -220,7 +220,7 @@ export async function getDatabaseStats() {
       throw new Error('Database not connected');
     }
 
-    const db = mongoose.connection.db;
+    const { db } = mongoose.connection;
     const stats = await db.stats();
     const collections = await db.listCollections().toArray();
 
@@ -244,12 +244,12 @@ export async function getDatabaseStats() {
 
 /**
  * Setup database event listeners.
- * 
+ *
  * @function setupDatabaseListeners
  * @returns {void}
  */
 export function setupDatabaseListeners() {
-  const connection = mongoose.connection;
+  const { connection } = mongoose;
 
   connection.on('connected', () => {
     dbState.isConnected = true;
@@ -289,11 +289,11 @@ export function setupDatabaseListeners() {
 
 /**
  * Initialize database with collections and indexes.
- * 
+ *
  * @async
  * @function initializeDatabase
  * @returns {Promise<void>}
- * 
+ *
  * @example
  * await initializeDatabase();
  */
@@ -304,12 +304,12 @@ export async function initializeDatabase() {
     // Example: Create indexes for common collections
     // You can expand this based on your models
     const collections = ['users', 'documents', 'sessions'];
-    
+
     for (const collectionName of collections) {
       try {
         // Check if collection exists, create if not
         const collections = await mongoose.connection.db.listCollections({ name: collectionName }).toArray();
-        
+
         if (collections.length === 0) {
           await mongoose.connection.db.createCollection(collectionName);
           logger.info(`Created collection: ${collectionName}`);
@@ -317,7 +317,7 @@ export async function initializeDatabase() {
 
         // Add common indexes
         const collection = mongoose.connection.db.collection(collectionName);
-        
+
         switch (collectionName) {
           case 'users':
             await collection.createIndex({ email: 1 }, { unique: true, background: true });
@@ -351,12 +351,12 @@ export async function initializeDatabase() {
 
 /**
  * Backup database to a file.
- * 
+ *
  * @async
  * @function backupDatabase
  * @param {string} [outputPath] - Output path for backup file
  * @returns {Promise<string>} Path to backup file
- * 
+ *
  * @example
  * const backupPath = await backupDatabase('./backups/');
  */
@@ -364,7 +364,7 @@ export async function backupDatabase(outputPath = './backups/') {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupFile = `${outputPath}backup-${timestamp}.json`;
-    
+
     logger.info('Starting database backup...', { outputPath: backupFile });
 
     // This is a simple JSON backup - for production use mongodump
@@ -378,10 +378,10 @@ export async function backupDatabase(outputPath = './backups/') {
     }
 
     // Write backup file (you'll need to implement file writing)
-    logger.info('Database backup completed', { 
+    logger.info('Database backup completed', {
       file: backupFile,
       collections: collections.length,
-      timestamp 
+      timestamp
     });
 
     return backupFile;
