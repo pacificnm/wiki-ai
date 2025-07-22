@@ -1,24 +1,24 @@
-import React from 'react';
 import {
-  Box,
-  Typography,
-  Button,
-  Container,
-  Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
-  Stack,
-  Paper
-} from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
-  Refresh as RefreshIcon,
-  Home as HomeIcon,
   BugReport as BugReportIcon,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  ExpandMore as ExpandMoreIcon,
+  Home as HomeIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Container,
+  Paper,
+  Stack,
+  Typography
+} from '@mui/material';
+import React from 'react';
 
 /**
  * Error boundary component to catch and display React errors.
@@ -77,46 +77,47 @@ class ErrorBoundary extends React.Component {
     this.logErrorToService(error, errorInfo);
   }
 
-/**
- * Log error to external monitoring service.
- * 
- * @param {Error} error - The error that was thrown
- * @param {Object} errorInfo - Component stack trace information
- */
-logErrorToService = (error, errorInfo) => {
-  const errorData = {
-    message: error.message,
-    stack: error.stack,
-    componentStack: errorInfo.componentStack,
-    errorId: `error_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
-    timestamp: new Date().toISOString(),
-    userAgent: navigator.userAgent,
-    level: 'error',
-    source: 'react',
-    metadata: {
-      componentName: errorInfo.componentStack?.split('\n')[1]?.trim() || 'Unknown',
-      reactVersion: React.version || 'Unknown'
+  /**
+   * Log error to external monitoring service.
+   * 
+   * @param {Error} error - The error that was thrown
+   * @param {Object} errorInfo - Component stack trace information
+   */
+  logErrorToService = (error, errorInfo) => {
+    const errorData = {
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      errorId: `error_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      level: 'error',
+      source: 'react',
+      metadata: {
+        componentName: errorInfo.componentStack?.split('\n')[1]?.trim() || 'Unknown',
+        reactVersion: React.version || 'Unknown'
+      }
+    };
+
+    // Get auth token if available
+    const token = localStorage.getItem('authToken'); // Adjust based on your auth implementation
+
+    if (process.env.NODE_ENV === 'production') {
+      const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+      fetch(`${serverUrl}/api/errors`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify(errorData)
+      }).catch(err => {
+        console.error('Failed to log error to service:', err);
+      });
+    } else {
+      console.log('Error data that would be sent to monitoring service:', errorData);
     }
-  };
-
-  // Get auth token if available
-  const token = localStorage.getItem('authToken'); // Adjust based on your auth implementation
-
-  if (process.env.NODE_ENV === 'production') {
-    fetch('/api/errors', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      },
-      body: JSON.stringify(errorData)
-    }).catch(err => {
-      console.error('Failed to log error to service:', err);
-    });
-  } else {
-    console.log('Error data that would be sent to monitoring service:', errorData);
-  }
-};  /**
+  };  /**
    * Handle retry button click.
    */
   handleRetry = () => {
@@ -149,18 +150,18 @@ logErrorToService = (error, errorInfo) => {
    */
   getUserFriendlyMessage = () => {
     const { error } = this.state;
-    
+
     if (!error) return 'An unexpected error occurred';
 
     // Check for common error patterns
     if (error.message.includes('ChunkLoadError') || error.message.includes('Loading chunk')) {
       return 'Failed to load application resources. This might be due to a network issue or an updated version.';
     }
-    
+
     if (error.message.includes('Network Error') || error.message.includes('fetch')) {
       return 'Network connection error. Please check your internet connection.';
     }
-    
+
     if (error.message.includes('Permission') || error.message.includes('Unauthorized')) {
       return 'You don\'t have permission to access this resource. Please sign in or contact support.';
     }
@@ -175,17 +176,17 @@ logErrorToService = (error, errorInfo) => {
    */
   getErrorCategory = () => {
     const { error } = this.state;
-    
+
     if (!error) return { type: 'error', color: 'error', icon: ErrorIcon };
 
     if (error.message.includes('ChunkLoadError') || error.message.includes('Loading chunk')) {
       return { type: 'network', color: 'warning', icon: RefreshIcon };
     }
-    
+
     if (error.message.includes('Network Error') || error.message.includes('fetch')) {
       return { type: 'network', color: 'warning', icon: RefreshIcon };
     }
-    
+
     if (error.message.includes('Permission') || error.message.includes('Unauthorized')) {
       return { type: 'permission', color: 'error', icon: ErrorIcon };
     }
@@ -216,18 +217,18 @@ logErrorToService = (error, errorInfo) => {
           <Paper elevation={1} sx={{ p: 4, borderRadius: 2 }}>
             {/* Error Icon and Title */}
             <Box display="flex" alignItems="center" mb={3}>
-              <ErrorIcon 
-                color={errorCategory.color} 
-                sx={{ fontSize: 48, mr: 2 }} 
+              <ErrorIcon
+                color={errorCategory.color}
+                sx={{ fontSize: 48, mr: 2 }}
               />
               <Box>
                 <Typography variant="h4" component="h1" color={errorCategory.color}>
                   Oops! Something went wrong
                 </Typography>
-                <Chip 
-                  label={errorCategory.type.toUpperCase()} 
+                <Chip
+                  label={errorCategory.type.toUpperCase()}
                   color={errorCategory.color}
-                  size="small" 
+                  size="small"
                   sx={{ mt: 1 }}
                 />
               </Box>
@@ -286,12 +287,12 @@ logErrorToService = (error, errorInfo) => {
                     <Typography variant="subtitle2" color="error" gutterBottom>
                       Error Message:
                     </Typography>
-                    <Typography 
-                      variant="body2" 
-                      component="pre" 
-                      sx={{ 
-                        backgroundColor: '#f5f5f5', 
-                        p: 1, 
+                    <Typography
+                      variant="body2"
+                      component="pre"
+                      sx={{
+                        backgroundColor: '#f5f5f5',
+                        p: 1,
                         borderRadius: 1,
                         overflow: 'auto',
                         fontSize: '0.75rem'
@@ -306,12 +307,12 @@ logErrorToService = (error, errorInfo) => {
                       <Typography variant="subtitle2" color="error" gutterBottom>
                         Stack Trace:
                       </Typography>
-                      <Typography 
-                        variant="body2" 
-                        component="pre" 
-                        sx={{ 
-                          backgroundColor: '#f5f5f5', 
-                          p: 1, 
+                      <Typography
+                        variant="body2"
+                        component="pre"
+                        sx={{
+                          backgroundColor: '#f5f5f5',
+                          p: 1,
                           borderRadius: 1,
                           overflow: 'auto',
                           fontSize: '0.75rem',
@@ -328,12 +329,12 @@ logErrorToService = (error, errorInfo) => {
                       <Typography variant="subtitle2" color="error" gutterBottom>
                         Component Stack:
                       </Typography>
-                      <Typography 
-                        variant="body2" 
-                        component="pre" 
-                        sx={{ 
-                          backgroundColor: '#f5f5f5', 
-                          p: 1, 
+                      <Typography
+                        variant="body2"
+                        component="pre"
+                        sx={{
+                          backgroundColor: '#f5f5f5',
+                          p: 1,
                           borderRadius: 1,
                           overflow: 'auto',
                           fontSize: '0.75rem',

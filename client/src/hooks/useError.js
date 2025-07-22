@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
 import { useSnackbar } from 'notistack';
+import { useCallback, useState } from 'react';
 
 /**
  * Custom hook for handling errors in React components.
@@ -188,7 +188,7 @@ function getUserFriendlyMessage(error) {
 function sendToErrorService(errorObj) {
   // In production, send to your error monitoring service
   // Examples: Sentry, LogRocket, Bugsnag, etc.
-  
+
   const errorData = {
     message: errorObj.message,
     stack: errorObj.original?.stack || undefined,
@@ -210,7 +210,8 @@ function sendToErrorService(errorObj) {
   const token = localStorage.getItem('authToken'); // Adjust based on your auth implementation
 
   // Example API call to our error endpoint
-  fetch('/api/errors', {
+  const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+  fetch(`${serverUrl}/api/errors`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -250,7 +251,7 @@ export function useApiError() {
       } else if (response && !response.ok) {
         // HTTP error responses
         const errorData = await response.json().catch(() => null);
-        
+
         errorMessage = errorData?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
         userMessage = errorData?.error?.message || getUserFriendlyMessage(errorMessage);
 
@@ -271,6 +272,8 @@ export function useApiError() {
           case 500:
             userMessage = 'Server error. Please try again later.';
             break;
+          default:
+            userMessage = 'An unexpected error occurred. Please try again.';
         }
       }
     } catch (parseError) {
@@ -278,7 +281,7 @@ export function useApiError() {
     }
 
     const fullMessage = context ? `${context}: ${userMessage}` : userMessage;
-    
+
     return handleError(new Error(errorMessage), fullMessage);
   }, [handleError]);
 

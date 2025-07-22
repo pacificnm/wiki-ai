@@ -30,7 +30,7 @@ export async function initializeFirebase() {
     ];
 
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
+
     if (missingVars.length > 0) {
       throw new Error(`Missing Firebase environment variables: ${missingVars.join(', ')}`);
     }
@@ -47,7 +47,7 @@ export async function initializeFirebase() {
     };
 
     admin.initializeApp(firebaseConfig);
-    
+
     logger.info('Firebase Admin SDK initialized successfully', {
       projectId: process.env.FIREBASE_PROJECT_ID,
       hasDatabase: !!process.env.FIREBASE_DATABASE_URL,
@@ -55,9 +55,9 @@ export async function initializeFirebase() {
     });
 
   } catch (error) {
-    logger.error('Firebase initialization failed', { 
+    logger.error('Firebase initialization failed', {
       error: error.message,
-      stack: error.stack 
+      stack: error.stack
     });
     throw error;
   }
@@ -145,8 +145,8 @@ export async function verifyIdToken(idToken) {
     const decodedToken = await auth.verifyIdToken(idToken);
     return decodedToken;
   } catch (error) {
-    logger.error('Firebase token verification failed', { 
-      error: error.message 
+    logger.error('Firebase token verification failed', {
+      error: error.message
     });
     throw new Error('Invalid or expired token');
   }
@@ -173,9 +173,9 @@ export async function getUserById(uid) {
     const userRecord = await auth.getUser(uid);
     return userRecord;
   } catch (error) {
-    logger.error('Failed to get user by ID', { 
-      uid, 
-      error: error.message 
+    logger.error('Failed to get user by ID', {
+      uid,
+      error: error.message
     });
     throw new Error(`User not found: ${uid}`);
   }
@@ -204,10 +204,96 @@ export async function setCustomClaims(uid, claims) {
     await auth.setCustomUserClaims(uid, claims);
     logger.info('Custom claims set successfully', { uid, claims });
   } catch (error) {
-    logger.error('Failed to set custom claims', { 
-      uid, 
-      claims, 
-      error: error.message 
+    logger.error('Failed to set custom claims', {
+      uid,
+      claims,
+      error: error.message
+    });
+    throw error;
+  }
+}
+
+/**
+ * Create a new user in the system.
+ * 
+ * @async
+ * @function createUser
+ * @param {Object} userData - User data
+ * @param {string} userData.firebaseUid - Firebase UID
+ * @param {string} userData.email - User email
+ * @param {string} userData.displayName - Display name
+ * @param {string} [userData.profileImage] - Profile image URL
+ * @param {string} [userData.role='user'] - User role
+ * @returns {Promise<Object>} Created user data
+ * @throws {Error} When creation fails
+ */
+export async function createUser(userData) {
+  try {
+    const { firebaseUid, email, displayName, profileImage, role = 'user' } = userData;
+
+    // Set custom claims for role-based access
+    await setCustomClaims(firebaseUid, { role });
+
+    // For now, we'll return the user data since we don't have a database model
+    // In a real app, you'd save this to MongoDB
+    const user = {
+      id: firebaseUid,
+      firebaseUid,
+      email,
+      displayName,
+      profileImage,
+      role,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    logger.info('User created successfully', { userId: firebaseUid, email });
+    return user;
+  } catch (error) {
+    logger.error('Failed to create user', {
+      userData,
+      error: error.message
+    });
+    throw error;
+  }
+}
+
+/**
+ * Update user data.
+ * 
+ * @async
+ * @function updateUser
+ * @param {string} firebaseUid - Firebase UID
+ * @param {Object} updates - Updates to apply
+ * @returns {Promise<Object>} Updated user data
+ * @throws {Error} When update fails
+ */
+export async function updateUser(firebaseUid, updates) {
+  try {
+    // Get current user
+    const currentUser = await getUserById(firebaseUid);
+
+    // For now, we'll return merged data since we don't have a database model
+    // In a real app, you'd update this in MongoDB
+    const updatedUser = {
+      id: firebaseUid,
+      firebaseUid,
+      email: currentUser.email,
+      displayName: updates.displayName || currentUser.displayName,
+      profileImage: updates.profileImage || currentUser.photoURL,
+      role: updates.role || 'user', // You'd get this from database
+      createdAt: currentUser.metadata?.creationTime || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...updates
+    };
+
+    logger.info('User updated successfully', { userId: firebaseUid });
+    return updatedUser;
+  } catch (error) {
+    logger.error('Failed to update user', {
+      firebaseUid,
+      updates,
+      error: error.message
     });
     throw error;
   }

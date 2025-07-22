@@ -1,4 +1,5 @@
 import express from 'express';
+import authRoutes from './authRoutes.js';
 import errorRoutes from './errorRoutes.js';
 
 const router = express.Router();
@@ -23,6 +24,13 @@ router.get('/health', (req, res) => {
     version: process.env.npm_package_version || '1.0.0'
   });
 });
+
+/**
+ * Authentication routes.
+ * 
+ * @route /api/auth/*
+ */
+router.use('/auth', authRoutes);
 
 /**
  * Error logging and management routes.

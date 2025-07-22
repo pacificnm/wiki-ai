@@ -1,17 +1,16 @@
 
 // 1. Core and third-party imports
-import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 
 // 2. Custom imports
-import { logger, morganStream } from './middleware/logger.js';
-import { errorHandler, AppError } from './middleware/error.js';
-import { initializeFirebase } from './config/firebase.js';
 import { connectToDatabase, initializeDatabase } from './config/database.js';
+import { initializeFirebase } from './config/firebase.js';
+import { AppError, errorHandler } from './middleware/error.js';
+import { logger, morganStream } from './middleware/logger.js';
 import routes from './routes/index.js';
 
 // 3. Init and config
@@ -30,7 +29,14 @@ async function startServer() {
   try {
     // 4. App middleware
     app.use(helmet());
-    app.use(cors());
+    app.use(cors({
+      origin: [
+        'http://localhost:3000',
+        'https://curly-train-7jgg75w5w2rr57-3000.app.github.dev',
+        /^https:\/\/.*\.app\.github\.dev$/
+      ],
+      credentials: true
+    }));
     app.use(express.json());
     app.use(morgan('combined', { stream: morganStream }));
 
@@ -58,12 +64,13 @@ async function startServer() {
     // 10. MongoDB connection
     await connectToDatabase();
     await initializeDatabase();
-    
+
     logger.info('Database connected and initialized successfully');
 
     // 11. Start server
-    app.listen(PORT, () => {
-      logger.info(`Server running at http://localhost:${PORT}`);
+    const HOST = process.env.HOST || '0.0.0.0';
+    app.listen(PORT, HOST, () => {
+      logger.info(`Server running at http://${HOST}:${PORT}`);
     });
 
   } catch (error) {

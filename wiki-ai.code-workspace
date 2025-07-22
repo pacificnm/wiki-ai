@@ -1,0 +1,40 @@
+{
+  "folders": [
+    {
+      "name": "Wiki-AI Root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "auto"
+  },
+  "extensions": {
+    "recommendations": [
+      "mongodb.mongodb-vscode",
+      "ms-vscode.vscode-typescript-next",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "eamodio.gitlens",
+      "github.copilot",
+      "usernamehw.errorlens",
+      "yzhang.markdown-all-in-one"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Full Development Environment",
+        "dependsOrder": "sequence",
+        "dependsOn": [
+          "Initialize Database",
+          "Start Development Server"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      }
+    ]
+  }
+}
