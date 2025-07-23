@@ -84,7 +84,36 @@ An AI-enhanced documentation system where users can upload documents or enter pr
 
 ---
 
-## 📦 Project Structure (Planned)
+## � Deployment
+
+### Railway Deployment
+
+This application is configured for easy deployment on Railway. See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for detailed instructions.
+
+Quick deployment:
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and initialize
+railway login
+railway init
+
+# Build and deploy
+npm run deploy:production
+```
+
+### Manual Deployment Steps
+
+1. **Build the client**: `npm run build`
+2. **Set environment variables** (see `.env.example`)
+3. **Deploy server** with built client files
+4. **Initialize database**: `npm run db:init`
+5. **Create admin user**: `npm run make:admin`
+
+---
+
+## �📦 Project Structure (Planned)
 
 ```
 /client

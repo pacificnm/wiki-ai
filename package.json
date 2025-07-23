@@ -9,6 +9,10 @@
     "start": "node server/index.js",
     "stop": "kill-port 3000 5000",
     "build": "cd client && npm run build",
+    "build:production": "npm run build && npm run build:server",
+    "build:server": "echo 'Server build complete'",
+    "deploy": "railway up",
+    "deploy:production": "npm run build:production && railway up",
     "lint": "eslint . --ext .js,.jsx --max-warnings 0",
     "lint:fix": "eslint . --ext .js,.jsx --fix",
     "lint:client": "cd client && eslint src --ext .js,.jsx",
@@ -51,6 +55,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
+    "@railway/cli": "^3.0.0",
     "concurrently": "^8.2.0",
     "eslint": "^8.49.0",
     "eslint-plugin-import": "^2.32.0",

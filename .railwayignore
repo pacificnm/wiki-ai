@@ -1,0 +1,23 @@
+# Files and directories to ignore during Railway deployment
+
+# Development files
+.env.local
+.env.development
+
+# Client development files (we'll serve the built version)
+client/src
+client/public
+client/node_modules
+
+# Development tools
+.vscode/
+*.log
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/

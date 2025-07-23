@@ -1,4 +1,6 @@
 // 1. Core and third-party imports
+import path from 'path';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
@@ -18,6 +20,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /**
  * Start the server with proper async initialization.
  *
@@ -29,17 +35,27 @@ async function startServer() {
   try {
     // 4. App middleware
     app.use(helmet());
-    app.use(cors({
-      origin: [
-        'http://localhost:3000',
-        'https://curly-train-7jgg75w5w2rr57-3000.app.github.dev',
-        /^https:\/\/.*\.app\.github\.dev$/
-      ],
+
+    // Configure CORS for different environments
+    const corsOptions = {
+      origin: process.env.NODE_ENV === 'production'
+        ? [
+          process.env.CLIENT_URL,
+          /^https:\/\/.*\.railway\.app$/,
+          /^https:\/\/.*\.up\.railway\.app$/
+        ]
+        : [
+          'http://localhost:3000',
+          'https://curly-train-7jgg75w5w2rr57-3000.app.github.dev',
+          /^https:\/\/.*\.app\.github\.dev$/
+        ],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
       optionsSuccessStatus: 200
-    }));
+    };
+
+    app.use(cors(corsOptions));
     app.use(express.json());
     app.use(morgan('combined', { stream: morganStream }));
 
@@ -49,28 +65,39 @@ async function startServer() {
     // 6. Routes
     app.use('/api', routes);
 
-    // 7. Health check
-    app.get('/', (req, res) => {
-      logger.info('Health check requested');
-      res.status(200).json({ status: 'ok', message: 'Server running' });
-    });
+    // 7. Serve static files in production
+    if (process.env.NODE_ENV === 'production') {
+      // Serve static files from the React app build directory
+      app.use(express.static(path.join(__dirname, '../client/build')));
 
-    // 8. 404 handler for non-API routes
-    app.use('*', (req, res, next) => {
-      const error = new AppError(`Route ${req.originalUrl} not found`, 404, 'NOT_FOUND');
-      next(error);
-    });
+      // Handle React routing, return all requests to React app
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+      });
+    } else {
+      // 8. Development health check
+      app.get('/', (req, res) => {
+        logger.info('Health check requested');
+        res.status(200).json({ status: 'ok', message: 'Server running' });
+      });
 
-    // 9. Global error handler
+      // 9. 404 handler for non-API routes in development
+      app.use('*', (req, res, next) => {
+        const error = new AppError(`Route ${req.originalUrl} not found`, 404, 'NOT_FOUND');
+        next(error);
+      });
+    }
+
+    // 10. Global error handler
     app.use(errorHandler);
 
-    // 10. MongoDB connection
+    // 11. MongoDB connection
     await connectToDatabase();
     await initializeDatabase();
 
     logger.info('Database connected and initialized successfully');
 
-    // 11. Start server
+    // 12. Start server
     const HOST = process.env.HOST || '0.0.0.0';
     app.listen(PORT, HOST, () => {
       logger.info(`Server running at http://${HOST}:${PORT}`);
