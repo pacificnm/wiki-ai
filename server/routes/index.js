@@ -7,6 +7,7 @@ import categoryRoutes from './categoryRoutes.js';
 import commentRoutes from './commentRoutes.js';
 import documentRoutes from './documentRoutes.js';
 import errorRoutes from './errorRoutes.js';
+import exportRoutes from './exportRoutes.js';
 import favoriteRoutes from './favoriteRoutes.js';
 
 const router = express.Router();
@@ -80,6 +81,13 @@ router.use('/favorites', favoriteRoutes);
  * @route /api/activities/*
  */
 router.use('/activities', activityRoutes);
+
+/**
+ * Export routes for documents.
+ *
+ * @route /api/export/*
+ */
+router.use('/export', exportRoutes);
 
 /**
  * Admin routes.

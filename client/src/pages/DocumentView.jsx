@@ -2,25 +2,34 @@ import {
   ArrowBack as ArrowBackIcon,
   Category as CategoryIcon,
   Comment as CommentIcon,
+  Download as DownloadIcon,
   Edit as EditIcon,
   History as HistoryIcon,
+  PictureAsPdf as PdfIcon,
   Person as PersonIcon,
   Schedule as ScheduleIcon,
   Tag as TagIcon,
-  Visibility as ViewIcon
+  Visibility as ViewIcon,
+  TextSnippet as WordIcon
 } from '@mui/icons-material';
 import {
   Avatar,
   Box,
   Button,
+  ButtonGroup,
   Chip,
+  ClickAwayListener,
   Divider,
   Grid,
+  Grow,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
+  MenuItem,
+  MenuList,
   Paper,
+  Popper,
   Switch,
   Tab,
   Tabs,
@@ -28,7 +37,7 @@ import {
   useTheme
 } from '@mui/material';
 import 'highlight.js/styles/github.css'; // Import highlight.js styles
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate, useParams } from 'react-router-dom';
 import rehypeHighlight from 'rehype-highlight';
@@ -37,6 +46,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { AuthContext } from '../contexts/AuthContext';
 import { useError } from '../hooks/useError';
 import documentService from '../services/documentService';
+import exportService from '../services/exportService';
 import { logger } from '../utils/logger';
 
 function DocumentView() {
@@ -55,12 +65,16 @@ function DocumentView() {
   const [sidebarTab, setSidebarTab] = useState(0);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportAnchorRef = useRef(null);
 
   // Fetch document data
   useEffect(() => {
     if (id) {
       fetchDocument();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   /**
@@ -188,6 +202,73 @@ function DocumentView() {
   };
 
   /**
+   * Handle export dropdown toggle
+   */
+  const handleExportToggle = () => {
+    setExportDropdownOpen((prevOpen) => !prevOpen);
+  };
+
+  /**
+   * Handle export dropdown close
+   */
+  const handleExportClose = (event) => {
+    if (exportAnchorRef.current && exportAnchorRef.current.contains(event.target)) {
+      return;
+    }
+    setExportDropdownOpen(false);
+  };
+
+  /**
+   * Handle PDF export
+   */
+  const handleExportPDF = async () => {
+    setExportDropdownOpen(false);
+
+    try {
+      setExporting(true);
+      await exportService.exportAndDownloadPDF(id, document.title);
+
+      logger.info('PDF export successful', {
+        documentId: id,
+        title: document.title
+      });
+    } catch (err) {
+      logger.error('PDF export failed', {
+        error: err.message,
+        documentId: id
+      });
+      handleError(err, 'Failed to export PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  /**
+   * Handle Word export
+   */
+  const handleExportWord = async () => {
+    setExportDropdownOpen(false);
+
+    try {
+      setExporting(true);
+      await exportService.exportAndDownloadWord(id, document.title);
+
+      logger.info('Word export successful', {
+        documentId: id,
+        title: document.title
+      });
+    } catch (err) {
+      logger.error('Word export failed', {
+        error: err.message,
+        documentId: id
+      });
+      handleError(err, 'Failed to export Word document');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  /**
    * Format time ago
    */
   const formatTimeAgo = (timestamp) => {
@@ -265,15 +346,71 @@ function DocumentView() {
           )}
         </Box>
 
-        {canEdit && (
-          <Button
-            variant="contained"
-            startIcon={<EditIcon />}
-            onClick={handleEdit}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {/* Export Button Group */}
+          <ButtonGroup
+            variant="outlined"
+            ref={exportAnchorRef}
+            aria-label="export document options"
           >
-            Edit Document
-          </Button>
-        )}
+            <Button
+              startIcon={<DownloadIcon />}
+              onClick={handleExportToggle}
+              disabled={exporting}
+              aria-controls={exportDropdownOpen ? 'export-menu' : undefined}
+              aria-expanded={exportDropdownOpen ? 'true' : undefined}
+              aria-haspopup="menu"
+            >
+              {exporting ? 'Exporting...' : 'Export'}
+            </Button>
+          </ButtonGroup>
+
+          {/* Export Dropdown */}
+          <Popper
+            sx={{ zIndex: 1 }}
+            open={exportDropdownOpen}
+            anchorEl={exportAnchorRef.current}
+            role={undefined}
+            transition
+            disablePortal
+          >
+            {({ TransitionProps, placement }) => (
+              <Grow
+                {...TransitionProps}
+                style={{
+                  transformOrigin:
+                    placement === 'bottom' ? 'center top' : 'center bottom',
+                }}
+              >
+                <Paper>
+                  <ClickAwayListener onClickAway={handleExportClose}>
+                    <MenuList id="export-menu" autoFocusItem>
+                      <MenuItem onClick={handleExportPDF}>
+                        <PdfIcon sx={{ mr: 1 }} />
+                        Export as PDF
+                      </MenuItem>
+                      <MenuItem onClick={handleExportWord}>
+                        <WordIcon sx={{ mr: 1 }} />
+                        Export as Word
+                      </MenuItem>
+                    </MenuList>
+                  </ClickAwayListener>
+                </Paper>
+              </Grow>
+            )}
+          </Popper>
+
+          {/* Edit Button */}
+          {canEdit && (
+            <Button
+              variant="contained"
+              startIcon={<EditIcon />}
+              onClick={handleEdit}
+            >
+              Edit Document
+            </Button>
+          )}
+        </Box>
       </Box>
 
       <Grid container spacing={3}>
