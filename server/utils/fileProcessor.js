@@ -3,7 +3,7 @@ import path from 'path';
 
 /**
  * File processing utilities for extracting text content from various file types.
- * 
+ *
  * @author WikiAI Team
  * @description Handles text extraction from uploaded documents for AI processing.
  */
@@ -43,7 +43,7 @@ export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 /**
  * Check if a file type is supported.
- * 
+ *
  * @param {string} filename - The filename to check
  * @returns {boolean} Whether the file type is supported
  */
@@ -54,7 +54,7 @@ export const isSupportedFileType = (filename) => {
 
 /**
  * Get the MIME type for a file extension.
- * 
+ *
  * @param {string} filename - The filename
  * @returns {string} The MIME type
  */
@@ -65,7 +65,7 @@ export const getMimeType = (filename) => {
 
 /**
  * Extract text content from a file.
- * 
+ *
  * @param {string} filePath - Path to the file
  * @param {string} originalName - Original filename
  * @returns {Promise<{content: string, metadata: object}>} Extracted content and metadata
@@ -149,13 +149,14 @@ export const extractTextContent = async (filePath, originalName) => {
           .trim();
         break;
 
-      case '.csv':
+      case '.csv': {
         // Add some structure information for CSV
         const lines = content.split('\n').filter(line => line.trim());
         if (lines.length > 0) {
           processedContent = `CSV Data (${lines.length} rows):\n${content}`;
         }
         break;
+      }
 
       // Excel already handled above
     }
@@ -172,7 +173,7 @@ export const extractTextContent = async (filePath, originalName) => {
 
 /**
  * Clean up uploaded file.
- * 
+ *
  * @param {string} filePath - Path to the file to delete
  */
 export const cleanupFile = (filePath) => {
@@ -187,7 +188,7 @@ export const cleanupFile = (filePath) => {
 
 /**
  * Validate file upload.
- * 
+ *
  * @param {object} file - Multer file object
  * @returns {object} Validation result
  */

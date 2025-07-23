@@ -138,6 +138,7 @@ export const getAllDocuments = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };
 
 /**
@@ -270,6 +271,7 @@ export const getDocumentById = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };
 
 /**
@@ -295,7 +297,7 @@ export const createDocument = async (req, res, next) => {
     }
 
     // Find or create categories
-    let categoryIds = [];
+    const categoryIds = [];
     if (categories && categories.length > 0) {
       // Check if categories are IDs or names
       for (const categoryData of categories) {
@@ -423,6 +425,7 @@ export const createDocument = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };
 
 /**
@@ -458,7 +461,7 @@ export const updateDocument = async (req, res, next) => {
     }
 
     // Handle categories if provided
-    let categoryIds = document.categoryIds;
+    let { categoryIds } = document;
     if (categories && categories.length > 0) {
       categoryIds = [];
       // Check if categories are IDs or names
@@ -608,6 +611,7 @@ export const updateDocument = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };
 
 /**
@@ -676,6 +680,7 @@ export const deleteDocument = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };
 
 /**
@@ -739,4 +744,5 @@ export const getDocumentStats = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };

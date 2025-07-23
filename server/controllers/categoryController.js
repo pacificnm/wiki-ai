@@ -35,6 +35,7 @@ export const getAllCategories = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -67,6 +68,7 @@ export const getCategoryById = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -154,6 +156,7 @@ export const createCategory = async (req, res, next) => {
     }
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -272,6 +275,7 @@ export const updateCategory = async (req, res, next) => {
     }
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -310,6 +314,7 @@ export const deleteCategory = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -357,6 +362,7 @@ export const getCategoryStats = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+  return next();
 };
 
 /**

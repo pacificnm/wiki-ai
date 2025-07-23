@@ -1,6 +1,6 @@
-import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import multer from 'multer';
 import { MAX_FILE_SIZE, SUPPORTED_FILE_TYPES, validateFileUpload } from '../utils/fileProcessor.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 /**
  * Multer configuration for file uploads.
- * 
+ *
  * @author WikiAI Team
  * @description Configures multer for handling document uploads for AI processing.
  */
@@ -85,7 +85,7 @@ export const handleUploadError = (error, req, res, next) => {
     });
   }
 
-  next();
+  return next();
 };
 
 /**

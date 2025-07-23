@@ -115,7 +115,7 @@ router.put('/profile', authenticateToken, async (req, res) => {
 
     logger.info('User profile updated', { userId: req.user.uid, updates: Object.keys(updates) });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         id: updatedUser._id,

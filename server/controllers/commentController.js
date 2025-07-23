@@ -98,6 +98,7 @@ export const createComment = async (req, res, next) => {
     });
     next(error);
   }
+  return null;
 };
 
 /**
@@ -158,6 +159,7 @@ export const getDocumentComments = async (req, res, next) => {
     });
     next(error);
   }
+  return null;
 };
 
 /**
@@ -241,6 +243,7 @@ export const updateComment = async (req, res, next) => {
     });
     next(error);
   }
+  return null;
 };
 
 /**
@@ -317,4 +320,5 @@ export const deleteComment = async (req, res, next) => {
     });
     next(error);
   }
+  return null;
 };

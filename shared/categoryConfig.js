@@ -92,7 +92,7 @@ export const getDefaultIconAndColor = (name) => {
     knowledge: '🧠',
     resource: '📦',
     template: '📋',
-    example: '💡',
+    example: '💡'
   };
 
   const colors = [

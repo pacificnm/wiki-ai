@@ -155,7 +155,7 @@ export function useDocuments(options = {}) {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, category, page, limit, clearError, handleError]);
+  }, [clearError, page, searchTerm, category, limit, mergeDocumentsWithFavorites, handleError]);
 
   /**
    * Load more documents (pagination)

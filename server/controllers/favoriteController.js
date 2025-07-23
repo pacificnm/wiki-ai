@@ -68,6 +68,8 @@ export const getUserFavorites = async (req, res, next) => {
     });
     return next(error);
   }
+  // Ensure a return statement at the end (for linting/consistency)
+  return null;
 };
 
 /**
@@ -151,6 +153,7 @@ export const addToFavorites = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };
 
 /**
@@ -213,6 +216,7 @@ export const removeFromFavorites = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };
 
 /**
@@ -242,6 +246,7 @@ export const checkFavoriteStatus = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };
 
 /**
@@ -289,4 +294,5 @@ export const getFavoriteStats = async (req, res, next) => {
     });
     return next(error);
   }
+  return null;
 };

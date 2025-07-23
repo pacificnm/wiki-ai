@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 
 /**
  * OpenAI configuration and client setup.
- * 
+ *
  * @author WikiAI Team
  * @description Configures OpenAI client with API key and organization settings.
  */
@@ -24,7 +24,7 @@ const getOpenAIClient = () => {
   }
 
   const openaiConfig = {
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY
   };
 
   // Add organization if provided

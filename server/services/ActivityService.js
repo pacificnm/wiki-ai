@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { logger } from '../middleware/logger.js';
 import Activity from '../models/Activity.js';
 

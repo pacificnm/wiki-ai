@@ -140,6 +140,7 @@ User instructions: ${prompt}`;
       message: errorMessage
     });
   }
+  return null;
 };
 
 /**

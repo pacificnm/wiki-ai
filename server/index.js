@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
-
 // 2. Custom imports
 import { connectToDatabase, initializeDatabase } from './config/database.js';
 import { initializeFirebase } from './config/firebase.js';

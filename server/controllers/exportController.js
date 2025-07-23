@@ -239,6 +239,7 @@ export const exportToPDF = async (req, res) => {
       error: error.message
     });
   }
+  return null;
 };
 
 /**
@@ -288,7 +289,7 @@ export const exportToWord = async (req, res) => {
       new Paragraph({
         children: [
           new TextRun({
-            text: "Document Information",
+            text: 'Document Information',
             bold: true,
             size: 28
           })
@@ -297,25 +298,25 @@ export const exportToWord = async (req, res) => {
       }),
       new Paragraph({
         children: [
-          new TextRun({ text: "Title: ", bold: true }),
+          new TextRun({ text: 'Title: ', bold: true }),
           new TextRun({ text: document.title })
         ]
       }),
       new Paragraph({
         children: [
-          new TextRun({ text: "Author: ", bold: true }),
+          new TextRun({ text: 'Author: ', bold: true }),
           new TextRun({ text: document.userId?.displayName || document.userId?.email || 'Unknown' })
         ]
       }),
       new Paragraph({
         children: [
-          new TextRun({ text: "Created: ", bold: true }),
+          new TextRun({ text: 'Created: ', bold: true }),
           new TextRun({ text: new Date(document.createdAt).toLocaleDateString() })
         ]
       }),
       new Paragraph({
         children: [
-          new TextRun({ text: "Last Updated: ", bold: true }),
+          new TextRun({ text: 'Last Updated: ', bold: true }),
           new TextRun({ text: new Date(document.updatedAt).toLocaleDateString() })
         ]
       })
@@ -325,7 +326,7 @@ export const exportToWord = async (req, res) => {
       children.push(
         new Paragraph({
           children: [
-            new TextRun({ text: "Description: ", bold: true }),
+            new TextRun({ text: 'Description: ', bold: true }),
             new TextRun({ text: document.description })
           ]
         })
@@ -336,7 +337,7 @@ export const exportToWord = async (req, res) => {
       children.push(
         new Paragraph({
           children: [
-            new TextRun({ text: "Categories: ", bold: true }),
+            new TextRun({ text: 'Categories: ', bold: true }),
             new TextRun({ text: document.categoryIds.map(cat => cat.name).join(', ') })
           ]
         })
@@ -347,7 +348,7 @@ export const exportToWord = async (req, res) => {
       children.push(
         new Paragraph({
           children: [
-            new TextRun({ text: "Tags: ", bold: true }),
+            new TextRun({ text: 'Tags: ', bold: true }),
             new TextRun({ text: document.tags.join(', ') })
           ]
         })
@@ -355,7 +356,7 @@ export const exportToWord = async (req, res) => {
     }
 
     // Add spacing
-    children.push(new Paragraph({ text: "" }));
+    children.push(new Paragraph({ text: '' }));
 
     // Add main title
     children.push(
@@ -374,7 +375,7 @@ export const exportToWord = async (req, res) => {
     // Process content lines
     for (const line of lines) {
       if (line.trim() === '') {
-        children.push(new Paragraph({ text: "" }));
+        children.push(new Paragraph({ text: '' }));
       } else if (line.startsWith('# ')) {
         children.push(
           new Paragraph({
@@ -459,6 +460,7 @@ export const exportToWord = async (req, res) => {
       error: error.message
     });
   }
+  return null;
 };
 
 /**
@@ -485,7 +487,7 @@ function convertMarkdownToHTML(markdown) {
   html = html.replace(/`(.*?)`/gim, '<code>$1</code>');
 
   // Links
-  html = html.replace(/\[([^\]]*)\]\(([^\)]*)\)/gim, '<a href="$2">$1</a>');
+  html = html.replace(/\[([^\]]*)\]\(([^)]*)\)/gim, '<a href="$2">$1</a>');
 
   // Line breaks
   html = html.replace(/\n\n/gim, '</p><p>');

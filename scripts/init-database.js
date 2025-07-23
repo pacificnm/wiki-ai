@@ -3,7 +3,6 @@
 import dotenv from 'dotenv';
 import { connectToDatabase, initializeDatabase } from '../server/config/database.js';
 import { logger } from '../server/middleware/logger.js';
-
 // Import all models to ensure they're registered
 import {
   Category,

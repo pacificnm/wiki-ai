@@ -35,14 +35,12 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { useSnackbar } from 'notistack';
 import React from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useUsers } from '../../hooks/useUsers';
 import { logger } from '../../utils/logger';
 
 function UsersPage() {
-  const { enqueueSnackbar } = useSnackbar();
 
   const {
     users,
@@ -53,7 +51,6 @@ function UsersPage() {
     updateUser,
     deleteUser,
     toggleUserStatus,
-    updateUserRole
   } = useUsers({
     autoFetch: true,
     limit: 50 // Show more users in admin panel
