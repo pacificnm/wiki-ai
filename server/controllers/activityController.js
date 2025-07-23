@@ -1,5 +1,5 @@
 import { logger } from '../middleware/logger.js';
-import ActivityService from '../services/activityService.js';
+import ActivityService from '../services/ActivityService.js';
 
 /**
  * Get recent activities for the current user or globally
@@ -13,15 +13,15 @@ export const getRecentActivities = async (req, res, next) => {
       since
     } = req.query;
 
-    const userId = global === 'true' ? null : req.user.id;
+    const userId = global === 'true' ? null : req.user.dbUser._id;
     const activityTypes = types ? types.split(',') : null;
     const sinceDate = since ? new Date(since) : null;
 
-    const activities = await ActivityService.getRecentActivities({
+    const activities = await ActivityService.getActivities({
       userId,
       limit: parseInt(limit),
-      types: activityTypes,
-      since: sinceDate
+      type: activityTypes?.[0], // ActivityService.getActivities expects single type, not array
+      skip: 0
     });
 
     // Format activities for frontend
@@ -39,7 +39,7 @@ export const getRecentActivities = async (req, res, next) => {
     }));
 
     logger.info('Recent activities fetched successfully', {
-      requestUserId: req.user.id,
+      requestUserId: req.user.dbUser._id,
       filterUserId: userId,
       activitiesCount: formattedActivities.length,
       global: global === 'true'
@@ -73,16 +73,16 @@ export const getActivityStats = async (req, res, next) => {
       since
     } = req.query;
 
-    const userId = global === 'true' ? null : req.user.id;
+    const userId = global === 'true' ? null : req.user.dbUser._id;
     const sinceDate = since ? new Date(since) : null;
 
     const stats = await ActivityService.getActivityStats({
       userId,
-      since: sinceDate
+      startDate: sinceDate
     });
 
     logger.info('Activity stats fetched successfully', {
-      requestUserId: req.user.id,
+      requestUserId: req.user.dbUser._id,
       filterUserId: userId,
       stats
     });
@@ -94,7 +94,7 @@ export const getActivityStats = async (req, res, next) => {
 
   } catch (error) {
     logger.error('Error fetching activity stats', {
-      userId: req.user?.id,
+      userId: req.user?.dbUser?._id,
       error: error.message,
       stack: error.stack
     });

@@ -109,10 +109,6 @@ const DocumentCard = ({
             )}
           </Box>
 
-          <Typography variant="body2" color="text.secondary" paragraph>
-            {document.description || document.excerpt}
-          </Typography>
-
           {document.tags && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
               {document.tags.map((tag) => (
@@ -201,10 +197,6 @@ const DocumentCard = ({
             )}
           </Box>
         </Box>
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {document.description || document.excerpt}
-        </Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="caption" color="text.secondary">

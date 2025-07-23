@@ -10,6 +10,7 @@ import {
   Typography
 } from '@mui/material';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AvgPerCategory from '../components/AvgPerCategory';
 import CategoryCard from '../components/CategoryCard';
 import CategoryDialog from '../components/CategoryDialog';
@@ -19,6 +20,7 @@ import TotalDocuments from '../components/TotalDocuments';
 import { useCategories } from '../hooks/useCategories.js';
 
 function CategoriesPage() {
+  const navigate = useNavigate();
   const { categories, loading, refresh } = useCategories();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -41,8 +43,8 @@ function CategoriesPage() {
    * @param {Object} category - Category object
    */
   const handleViewDocuments = (category) => {
-    // TODO: Navigate to documents filtered by category
-    console.log('View documents for category:', category);
+    const categoryId = category._id || category.id;
+    navigate(`/categories/${categoryId}/documents`);
   };
 
   /**

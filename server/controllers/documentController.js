@@ -3,6 +3,7 @@ import { logger } from '../middleware/logger.js';
 import Category from '../models/Category.js';
 import Document from '../models/Document.js';
 import Version from '../models/Version.js';
+import ActivityService from '../services/ActivityService.js';
 
 /**
  * Get all documents with filtering, search, and pagination
@@ -156,6 +157,13 @@ export const getDocumentById = async (req, res, next) => {
           path: 'userId',
           select: 'displayName email'
         }
+      })
+      .populate({
+        path: 'versionHistory',
+        populate: {
+          path: 'createdBy',
+          select: 'displayName email'
+        }
       });
 
     if (!document) {
@@ -178,12 +186,25 @@ export const getDocumentById = async (req, res, next) => {
     // Increment view count
     await Document.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
 
+    // Log document view activity
+    ActivityService.logDocumentViewed({
+      userId: req.user.dbUser._id,
+      documentId: document._id,
+      title: document.title,
+      metadata: {
+        viewCount: (document.viewCount || 0) + 1,
+        category: document.categoryIds?.[0]?.name
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
     // Transform document for frontend
     const transformedDocument = {
       id: document._id,
       title: document.title,
       description: document.description,
-      content: document.currentVersionId?.content || '',
+      content: document.currentVersionId?.markdown || '',
       excerpt: document.currentVersionId?.excerpt || document.description || '',
       category: document.categoryIds?.[0]?.name || 'Uncategorized',
       categories: document.categoryIds?.map(cat => ({
@@ -204,7 +225,18 @@ export const getDocumentById = async (req, res, next) => {
       updatedAt: document.updatedAt,
       comments: document.commentIds || [],
       attachments: document.attachmentPaths || [],
-      versionHistory: document.versionHistory || []
+      versionHistory: document.versionHistory?.map(version => ({
+        id: version._id,
+        createdAt: version.createdAt,
+        createdBy: {
+          displayName: version.createdBy?.displayName,
+          email: version.createdBy?.email
+        },
+        reason: version.reason,
+        wordCount: version.wordCount,
+        charCount: version.charCount,
+        isMinor: version.isMinor
+      })) || []
     };
 
     logger.info('Document fetched successfully', {
@@ -350,6 +382,21 @@ export const createDocument = async (req, res, next) => {
       userId: req.user.dbUser._id,
       title,
       isPublished
+    });
+
+    // Log document creation activity
+    ActivityService.logDocumentCreated({
+      userId: req.user.dbUser._id,
+      documentId: document._id,
+      title,
+      metadata: {
+        isPublished,
+        categoryCount: categoryIds.length,
+        tagCount: (tags || []).length,
+        hasContent: !!content
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
     });
 
     res.status(201).json({
@@ -506,6 +553,36 @@ export const updateDocument = async (req, res, next) => {
       updatedFields: Object.keys(updateFields)
     });
 
+    // Log document update activity
+    ActivityService.logDocumentUpdated({
+      userId: req.user.dbUser._id,
+      documentId: id,
+      title: updatedDocument.title,
+      metadata: {
+        updatedFields: Object.keys(updateFields),
+        hasContentUpdate: content !== undefined,
+        isPublished: updatedDocument.isPublished,
+        categoryCount: updatedDocument.categoryIds?.length || 0
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    // Log publish/unpublish activity if status changed
+    if (isPublished !== undefined && isPublished !== document.isPublished) {
+      ActivityService.logDocumentPublished({
+        userId: req.user.dbUser._id,
+        documentId: id,
+        title: updatedDocument.title,
+        isPublished: Boolean(isPublished),
+        metadata: {
+          previousState: document.isPublished
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+    }
+
     res.json({
       success: true,
       data: transformedDocument
@@ -558,6 +635,20 @@ export const deleteDocument = async (req, res, next) => {
       documentId: id,
       userId: req.user.dbUser._id,
       title: document.title
+    });
+
+    // Log document deletion activity
+    ActivityService.logDocumentDeleted({
+      userId: req.user.dbUser._id,
+      documentId: id,
+      title: document.title,
+      metadata: {
+        versionCount: document.versionHistory?.length || 0,
+        wasPublished: document.isPublished,
+        viewCount: document.viewCount || 0
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
     });
 
     res.json({

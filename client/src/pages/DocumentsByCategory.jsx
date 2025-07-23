@@ -1,5 +1,6 @@
 import {
   Add as AddIcon,
+  ArrowBack as ArrowBackIcon,
   Article as ArticleIcon,
   Search as SearchIcon
 } from '@mui/icons-material';
@@ -18,13 +19,18 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useCategories } from '../hooks/useCategories';
 import { useDocuments } from '../hooks/useDocuments';
 import { logger } from '../utils/logger';
 
-function DocumentsPage() {
+function DocumentsByCategory() {
+  const { categoryId } = useParams();
   const navigate = useNavigate();
+  const { getCategoryById } = useCategories();
+  const [category, setCategory] = useState(null);
 
   const {
     documents,
@@ -35,21 +41,50 @@ function DocumentsPage() {
     searchTerm,
     search,
     setSearchTerm,
+    filterByCategory,
     refresh,
     loadMore,
     deleteDocument,
     updateDocument
   } = useDocuments({
-    autoFetch: true,
+    autoFetch: false, // We'll fetch manually with category filter
     limit: 12 // Show 12 documents per page
   });
+
+  // Load category information
+  useEffect(() => {
+    if (categoryId) {
+      const categoryData = getCategoryById(categoryId);
+      setCategory(categoryData);
+    }
+  }, [categoryId, getCategoryById]);
+
+  // Fetch documents for this category
+  useEffect(() => {
+    if (category) {
+      fetchDocumentsByCategory();
+    }
+  }, [category]);
+
+  const fetchDocumentsByCategory = async () => {
+    try {
+      // Filter documents by category name
+      await filterByCategory(category.name);
+    } catch (error) {
+      logger.error('Error fetching documents by category', {
+        categoryId,
+        categoryName: category?.name,
+        error: error.message
+      });
+    }
+  };
 
   // Handle search input change with debouncing
   const handleSearchChange = (e) => {
     const newSearchTerm = e.target.value;
     setSearchTerm(newSearchTerm);
 
-    // Debounce search - search function is already debounced in the hook
+    // Search within this category - first filter by category, then search
     search(newSearchTerm);
   };
 
@@ -71,6 +106,8 @@ function DocumentsPage() {
       try {
         await deleteDocument(documentId);
         logger.info('Document deleted successfully', { documentId });
+        // Refresh the list
+        fetchDocumentsByCategory();
       } catch (error) {
         logger.error('Error deleting document', { documentId, error: error.message });
       }
@@ -92,10 +129,10 @@ function DocumentsPage() {
     }
   };
 
-  // Handle create new document
+  // Handle create new document (with category pre-selected)
   const handleCreateDocument = () => {
-    logger.info('Creating new document');
-    navigate('/documents/new');
+    logger.info('Creating new document in category', { categoryId, categoryName: category?.name });
+    navigate(`/documents/new?category=${categoryId}`);
   };
 
   // Handle load more documents
@@ -103,6 +140,11 @@ function DocumentsPage() {
     if (hasMore && !loading) {
       loadMore();
     }
+  };
+
+  // Handle back navigation
+  const handleBack = () => {
+    navigate('/categories');
   };
 
   // Show loading spinner on initial load
@@ -135,10 +177,28 @@ function DocumentsPage() {
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Back Button */}
+      <Button
+        startIcon={<ArrowBackIcon />}
+        onClick={handleBack}
+        sx={{ mb: 2 }}
+      >
+        Back to Categories
+      </Button>
+
+      {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Documents {total > 0 && `(${total})`}
-        </Typography>
+        <Box>
+          <Typography variant="h4" component="h1">
+            {category?.name || 'Category Documents'}
+            {total > 0 && ` (${total})`}
+          </Typography>
+          {category?.description && (
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+              {category.description}
+            </Typography>
+          )}
+        </Box>
         <Fab
           color="primary"
           aria-label="add document"
@@ -148,11 +208,12 @@ function DocumentsPage() {
         </Fab>
       </Box>
 
+      {/* Search Bar */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search documents..."
+          placeholder={`Search documents in ${category?.name || 'this category'}...`}
           value={searchTerm}
           onChange={handleSearchChange}
           InputProps={{
@@ -165,6 +226,7 @@ function DocumentsPage() {
         />
       </Paper>
 
+      {/* Documents Grid */}
       <Grid container spacing={3}>
         {documents.map((doc) => (
           <Grid item xs={12} md={6} lg={4} key={doc.id}>
@@ -192,6 +254,10 @@ function DocumentsPage() {
                   </Box>
                 </Box>
 
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  {doc.excerpt}
+                </Typography>
+
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
                   {doc.tags?.map((tag) => (
                     <Chip key={tag} label={tag} size="small" variant="outlined" />
@@ -199,7 +265,7 @@ function DocumentsPage() {
                 </Box>
 
                 <Typography variant="caption" color="text.secondary">
-                  {doc.category} • By {doc.author} • Updated {new Date(doc.updatedAt).toLocaleDateString()}
+                  By {doc.author} • Updated {new Date(doc.updatedAt).toLocaleDateString()}
                   {doc.viewCount > 0 && ` • ${doc.viewCount} views`}
                 </Typography>
               </CardContent>
@@ -258,10 +324,13 @@ function DocumentsPage() {
       {documents.length === 0 && !loading && (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="h6" color="text.secondary">
-            No documents found
+            No documents found in {category?.name || 'this category'}
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            {searchTerm ? 'Try adjusting your search terms' : 'Create your first document to get started'}
+            {searchTerm
+              ? 'Try adjusting your search terms'
+              : `Create your first document in the ${category?.name || 'category'} to get started`
+            }
           </Typography>
           {!searchTerm && (
             <Button
@@ -270,7 +339,7 @@ function DocumentsPage() {
               onClick={handleCreateDocument}
               sx={{ mt: 2 }}
             >
-              Create Your First Document
+              Create First Document
             </Button>
           )}
         </Box>
@@ -279,4 +348,4 @@ function DocumentsPage() {
   );
 }
 
-export default DocumentsPage;
+export default DocumentsByCategory;

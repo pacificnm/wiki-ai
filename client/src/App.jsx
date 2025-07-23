@@ -11,7 +11,9 @@ import AdminUsersPage from './pages/admin/UsersPage';
 import CategoriesPage from './pages/CategoriesPage';
 import Dashboard from './pages/Dashboard';
 import DocumentEditor from './pages/DocumentEditor';
+import DocumentsByCategory from './pages/DocumentsByCategory';
 import DocumentsPage from './pages/DocumentsPage';
+import DocumentView from './pages/DocumentView';
 import FavoritesPage from './pages/FavoritesPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
@@ -61,10 +63,18 @@ function App() {
                 </PrivateRoute>
               } />
 
-              <Route path="/documents/:id" element={
+              <Route path="/documents/:id/edit" element={
                 <PrivateRoute>
                   <MainLayout>
                     <DocumentEditor />
+                  </MainLayout>
+                </PrivateRoute>
+              } />
+
+              <Route path="/documents/:id" element={
+                <PrivateRoute>
+                  <MainLayout>
+                    <DocumentView />
                   </MainLayout>
                 </PrivateRoute>
               } />
@@ -73,6 +83,14 @@ function App() {
                 <PrivateRoute>
                   <MainLayout>
                     <CategoriesPage />
+                  </MainLayout>
+                </PrivateRoute>
+              } />
+
+              <Route path="/categories/:categoryId/documents" element={
+                <PrivateRoute>
+                  <MainLayout>
+                    <DocumentsByCategory />
                   </MainLayout>
                 </PrivateRoute>
               } />

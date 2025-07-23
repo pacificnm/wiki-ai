@@ -1,13 +1,14 @@
 import { logger } from '../middleware/logger.js';
 import Document from '../models/Document.js';
 import Favorite from '../models/Favorite.js';
+import ActivityService from '../services/ActivityService.js';
 
 /**
  * Get all favorites for the current user
  */
 export const getUserFavorites = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.dbUser._id;
 
     const favorites = await Favorite.find({ userId })
       .populate({
@@ -74,7 +75,7 @@ export const getUserFavorites = async (req, res, next) => {
  */
 export const addToFavorites = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.dbUser._id;
     const { documentId } = req.params;
 
     // Check if document exists
@@ -98,6 +99,25 @@ export const addToFavorites = async (req, res, next) => {
     // Create favorite
     const favorite = new Favorite({ userId, documentId });
     await favorite.save();
+
+    // Log activity
+    await ActivityService.logFavoriteAdded({
+      userId,
+      documentId,
+      title: document.title,
+      metadata: {
+        documentTitle: document.title,
+        categoryId: document.categoryIds?.[0]
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    }).catch(err => {
+      logger.error('Failed to log favorite added activity', {
+        userId,
+        documentId,
+        error: err.message
+      });
+    });
 
     logger.info('Document added to favorites', {
       userId,
@@ -138,8 +158,11 @@ export const addToFavorites = async (req, res, next) => {
  */
 export const removeFromFavorites = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.dbUser._id;
     const { documentId } = req.params;
+
+    // Get document info before deletion for activity logging
+    const document = await Document.findById(documentId);
 
     const result = await Favorite.findOneAndDelete({ userId, documentId });
 
@@ -147,6 +170,27 @@ export const removeFromFavorites = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: 'Favorite not found'
+      });
+    }
+
+    // Log activity if document exists
+    if (document) {
+      await ActivityService.logFavoriteRemoved({
+        userId,
+        documentId,
+        title: document.title,
+        metadata: {
+          documentTitle: document.title,
+          categoryId: document.categoryIds?.[0]
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }).catch(err => {
+        logger.error('Failed to log favorite removed activity', {
+          userId,
+          documentId,
+          error: err.message
+        });
       });
     }
 
@@ -176,7 +220,7 @@ export const removeFromFavorites = async (req, res, next) => {
  */
 export const checkFavoriteStatus = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.dbUser._id;
     const { documentId } = req.params;
 
     const favorite = await Favorite.findOne({ userId, documentId });
@@ -205,7 +249,7 @@ export const checkFavoriteStatus = async (req, res, next) => {
  */
 export const getFavoriteStats = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.dbUser._id;
 
     const totalFavorites = await Favorite.countDocuments({ userId });
 
