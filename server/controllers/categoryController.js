@@ -1,6 +1,8 @@
+import { z } from 'zod';
 import { AppError } from '../middleware/error.js';
 import Category from '../models/Category.js';
 import Document from '../models/Document.js';
+import { validateCreateCategory, validateUpdateCategory } from '../validators/categoryValidators.js';
 
 /**
  * Get all categories
@@ -75,11 +77,21 @@ export const getCategoryById = async (req, res, next) => {
  */
 export const createCategory = async (req, res, next) => {
   try {
-    const { name, description, parentId } = req.body;
-
-    if (!name) {
-      return next(new AppError('Category name is required', 400));
+    // Validate request body with Zod
+    let validatedData;
+    try {
+      validatedData = validateCreateCategory(req.body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(new AppError(
+          `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+          400
+        ));
+      }
+      throw error;
     }
+
+    const { name, description, parentId } = validatedData;
 
     // Generate slug from name
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -116,6 +128,7 @@ export const createCategory = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
+      message: 'Category created successfully',
       category: {
         ...category.toJSON(),
         documentCount: 0
@@ -138,7 +151,22 @@ export const createCategory = async (req, res, next) => {
 export const updateCategory = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, parentId } = req.body;
+
+    // Validate request body with Zod
+    let validatedData;
+    try {
+      validatedData = validateUpdateCategory(req.body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(new AppError(
+          `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+          400
+        ));
+      }
+      throw error;
+    }
+
+    const { name, description, parentId } = validatedData;
 
     const category = await Category.findById(id);
     if (!category) {
@@ -210,6 +238,7 @@ export const updateCategory = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
+      message: 'Category updated successfully',
       category: {
         ...category.toJSON(),
         documentCount

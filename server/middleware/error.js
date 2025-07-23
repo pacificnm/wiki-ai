@@ -307,7 +307,7 @@ function sendErrorProd(err, req, res) {
  * // Add to Express app (must be last middleware)
  * app.use(errorHandler);
  */
-export function errorHandler(err, req, res) {
+export function errorHandler(err, req, res, next) {
   // Convert error to AppError if needed
   let error = err instanceof AppError ? err : handleError(err);
 

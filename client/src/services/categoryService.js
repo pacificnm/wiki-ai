@@ -7,6 +7,31 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api
  */
 class CategoryService {
   /**
+   * Get authorization headers with Firebase token
+   * @private
+   */
+  async _getAuthHeaders() {
+    try {
+      const { auth } = await import('../config/firebase');
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        throw new Error('No authenticated user');
+      }
+
+      const token = await currentUser.getIdToken();
+
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+    } catch (error) {
+      logger.error('Error getting auth headers', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
    * Get all categories
    * @returns {Promise<Array>} Array of categories
    */
@@ -66,17 +91,17 @@ class CategoryService {
    */
   async createCategory(categoryData) {
     try {
+      const headers = await this._getAuthHeaders();
+
       const response = await fetch(`${API_BASE_URL}/categories`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers,
         body: JSON.stringify(categoryData),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
@@ -95,17 +120,17 @@ class CategoryService {
    */
   async updateCategory(id, categoryData) {
     try {
+      const headers = await this._getAuthHeaders();
+
       const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers,
         body: JSON.stringify(categoryData),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();

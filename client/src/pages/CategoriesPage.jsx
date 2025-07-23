@@ -9,18 +9,32 @@ import {
   Paper,
   Typography
 } from '@mui/material';
+import { useState } from 'react';
 import AvgPerCategory from '../components/AvgPerCategory';
 import CategoryCard from '../components/CategoryCard';
+import CategoryDialog from '../components/CategoryDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 import TotalCategories from '../components/TotalCategories';
 import TotalDocuments from '../components/TotalDocuments';
 import { useCategories } from '../hooks/useCategories.js';
 
 function CategoriesPage() {
-  const { categories, loading } = useCategories();
+  const { categories, loading, refresh } = useCategories();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [dialogMode, setDialogMode] = useState('create');
 
   // Ensure categories is always an array
   const safeCategories = Array.isArray(categories) ? categories : [];
+
+  /**
+   * Handle opening create category dialog
+   */
+  const handleCreateCategory = () => {
+    setEditingCategory(null);
+    setDialogMode('create');
+    setDialogOpen(true);
+  };
 
   /**
    * Handle viewing documents for a category
@@ -36,8 +50,28 @@ function CategoriesPage() {
    * @param {Object} category - Category object
    */
   const handleEditCategory = (category) => {
-    // TODO: Navigate to category edit page or open modal
-    console.log('Edit category:', category);
+    setEditingCategory(category);
+    setDialogMode('edit');
+    setDialogOpen(true);
+  };
+
+  /**
+   * Handle successful category save/update
+   * @param {Object} category - Updated category data
+   */
+  const handleCategorySuccess = (category) => {
+    // Refetch categories to update the list
+    if (refresh) {
+      refresh();
+    }
+  };
+
+  /**
+   * Handle closing the dialog
+   */
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setEditingCategory(null);
   };
 
   if (loading) {
@@ -50,7 +84,11 @@ function CategoriesPage() {
         <Typography variant="h4" component="h1">
           Categories
         </Typography>
-        <Fab color="primary" aria-label="add category">
+        <Fab
+          color="primary"
+          aria-label="add category"
+          onClick={handleCreateCategory}
+        >
           <AddIcon />
         </Fab>
       </Box>
@@ -76,7 +114,12 @@ function CategoriesPage() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Get started by creating your first category to organize your documents.
           </Typography>
-          <Button variant="contained" color="primary" startIcon={<AddIcon />}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleCreateCategory}
+          >
             Create Category
           </Button>
         </Paper>
@@ -94,6 +137,16 @@ function CategoriesPage() {
           ))}
         </Grid>
       )}
+
+      {/* Category Dialog */}
+      <CategoryDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        onSuccess={handleCategorySuccess}
+        category={editingCategory}
+        allCategories={safeCategories}
+        mode={dialogMode}
+      />
     </Box>
   );
 }
