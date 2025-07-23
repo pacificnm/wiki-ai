@@ -267,6 +267,40 @@ class DocumentService {
       throw error;
     }
   }
+
+  /**
+   * Get document statistics
+   * @returns {Promise<Object>} Document statistics
+   */
+  async getStats() {
+    try {
+      const headers = await this._getAuthHeaders();
+
+      const response = await fetch(`${this.baseURL}/api/documents/stats`, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch document stats: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch document stats');
+      }
+
+      logger.info('Document stats fetched successfully', {
+        stats: data.data
+      });
+
+      return data.data;
+    } catch (error) {
+      logger.error('Error fetching document stats', { error: error.message });
+      throw error;
+    }
+  }
 }
 
 const documentService = new DocumentService();

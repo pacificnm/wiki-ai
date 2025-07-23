@@ -1,9 +1,11 @@
 import express from 'express';
+import activityRoutes from './activityRoutes.js';
 import adminRoutes from './admin/adminRoutes.js';
 import authRoutes from './authRoutes.js';
 import categoryRoutes from './categoryRoutes.js';
 import documentRoutes from './documentRoutes.js';
 import errorRoutes from './errorRoutes.js';
+import favoriteRoutes from './favoriteRoutes.js';
 
 const router = express.Router();
 
@@ -55,6 +57,20 @@ router.use('/categories', categoryRoutes);
  * @route /api/documents/*
  */
 router.use('/documents', documentRoutes);
+
+/**
+ * Favorite management routes.
+ *
+ * @route /api/favorites/*
+ */
+router.use('/favorites', favoriteRoutes);
+
+/**
+ * Activity tracking routes.
+ *
+ * @route /api/activities/*
+ */
+router.use('/activities', activityRoutes);
 
 /**
  * Admin routes.
