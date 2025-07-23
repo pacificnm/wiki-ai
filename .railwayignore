@@ -1,23 +1,30 @@
-# Files and directories to ignore during Railway deployment
+# Railway Deployment Ignore File
+# Only include what's needed for the server
 
-# Development files
+# Exclude wiki documentation
+wiki-ai.wiki/
+
+# Exclude entire client directory (server-only deployment)
+client/
+
+# Exclude development files
 .env.local
 .env.development
-
-# Client development files (we'll serve the built version)
-client/src
-client/public
-client/node_modules
-
-# Development tools
 .vscode/
 *.log
 coverage/
 
-# OS files
-.DS_Store
-Thumbs.db
+# Exclude documentation
+README.md
+RAILWAY_DEPLOYMENT.md
+*.md
 
-# Temporary files
-tmp/
-temp/
+# Exclude development tools
+.eslintrc*
+.prettier*
+scripts/
+
+# Include only these config files
+!nixpacks.toml
+!railway.toml
+!package.json

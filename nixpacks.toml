@@ -1,0 +1,21 @@
+# Nixpacks configuration for Railway deployment - SERVER ONLY
+# This deploys only the Node.js/Express server
+
+[phases.setup]
+nixPkgs = ["nodejs_18"]
+
+[phases.install]
+cmds = [
+  "npm install"
+]
+
+[phases.build]
+cmds = [
+  "echo 'Server-only build - no client build needed'"
+]
+
+[start]
+cmd = "npm run server"
+
+[variables]
+NODE_ENV = "production"
