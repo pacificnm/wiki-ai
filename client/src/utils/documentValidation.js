@@ -174,7 +174,7 @@ export const validateTags = (tags) => {
   }
 };
 
-export default {
+const documentValidationUtils = {
   createDocumentSchema,
   updateDocumentSchema,
   validateCreateDocument,
@@ -183,3 +183,5 @@ export default {
   validateCategories,
   validateTags
 };
+
+export default documentValidationUtils;

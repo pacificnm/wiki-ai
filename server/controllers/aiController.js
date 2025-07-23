@@ -261,6 +261,7 @@ Improvement Instructions: ${instructions}`;
       message: errorMessage
     });
   }
+  return null;
 };
 
 /**
@@ -467,10 +468,11 @@ User Processing Instructions: ${instructions}`;
       });
 
       const result = JSON.parse(completion.choices[0].message.content);
+      const { title: extractedTitle, tags: extractedTags = [], summary: extractedSummary = '' } = result;
       processedContent = result.content;
-      title = result.title;
-      tags = result.tags || [];
-      summary = result.summary || '';
+      title = extractedTitle;
+      tags = extractedTags;
+      summary = extractedSummary;
     }
 
     // Create final result object
@@ -534,6 +536,7 @@ User Processing Instructions: ${instructions}`;
       cleanupFile(uploadedFilePath);
     }
   }
+  return null;
 };
 
 export {

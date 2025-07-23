@@ -1,3 +1,4 @@
+
 import {
   Add as AddIcon,
   ArrowBack as ArrowBackIcon,
@@ -27,7 +28,7 @@ function DocumentsByCategory() {
   const navigate = useNavigate();
   const { getCategoryById } = useCategories();
   const [category, setCategory] = useState(null);
-  const [initialCategoryLoaded, setInitialCategoryLoaded] = useState(false);
+  const [, setInitialCategoryLoaded] = useState(false);
 
   const {
     documents,
@@ -41,7 +42,6 @@ function DocumentsByCategory() {
     refresh,
     loadMore,
     deleteDocument,
-    updateDocument,
     setCategory: setHookCategory,
     fetchDocuments,
     reset,
@@ -109,19 +109,6 @@ function DocumentsByCategory() {
   };
 
   // Handle document publish toggle
-  const handlePublishToggle = async (documentId, currentPublishedState, title) => {
-    const newPublishedState = !currentPublishedState;
-    const action = newPublishedState ? 'publish' : 'unpublish';
-
-    try {
-      await updateDocument(documentId, {
-        isPublished: newPublishedState
-      });
-      logger.info(`Document ${action}ed successfully`, { documentId, title });
-    } catch (error) {
-      logger.error(`Error ${action}ing document`, { documentId, error: error.message });
-    }
-  };
 
   // Handle favorite toggle
   const handleToggleFavorite = async (documentId) => {

@@ -298,7 +298,6 @@ function DocumentEditor() {
         maxSizeMB: 5,
         description: 'Supported formats: Text, Markdown, JSON, CSV, HTML, XML, JavaScript, TypeScript, Python, Java, C/C++, CSS, SQL, YAML, Excel (.xlsx, .xls)'
       };
-      return;
     }
 
     try {

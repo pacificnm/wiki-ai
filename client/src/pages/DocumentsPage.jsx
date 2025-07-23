@@ -35,7 +35,6 @@ function DocumentsPage() {
     refresh,
     loadMore,
     deleteDocument,
-    updateDocument,
     updateDocumentFavoriteStatus
   } = useDocuments({
     autoFetch: true,
@@ -76,19 +75,6 @@ function DocumentsPage() {
   };
 
   // Handle document publish toggle
-  const handlePublishToggle = async (documentId, currentPublishedState, title) => {
-    const newPublishedState = !currentPublishedState;
-    const action = newPublishedState ? 'publish' : 'unpublish';
-
-    try {
-      await updateDocument(documentId, {
-        isPublished: newPublishedState
-      });
-      logger.info(`Document ${action}ed successfully`, { documentId, title });
-    } catch (error) {
-      logger.error(`Error ${action}ing document`, { documentId, error: error.message });
-    }
-  };
 
   // Handle favorite toggle
   const handleToggleFavorite = async (documentId) => {

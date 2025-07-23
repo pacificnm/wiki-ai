@@ -113,6 +113,7 @@ export const getAllUsers = async (req, res, next) => {
     });
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -178,6 +179,7 @@ export const getUserById = async (req, res, next) => {
     });
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -271,6 +273,7 @@ export const updateUser = async (req, res, next) => {
     });
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -337,6 +340,7 @@ export const deleteUser = async (req, res, next) => {
     });
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -425,15 +429,17 @@ export const toggleUserStatus = async (req, res, next) => {
     });
     return next(error);
   }
+  return next();
 };
 
 /**
  * Update user role (Admin only)
  */
 export const updateUserRole = async (req, res, next) => {
+  let role;
   try {
     const { id } = req.params;
-    const { role } = req.body;
+    ({ role } = req.body);
 
     // Check if user is admin
     if (req.user.role !== 'admin') {
@@ -513,6 +519,7 @@ export const updateUserRole = async (req, res, next) => {
     });
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -588,4 +595,5 @@ export const getUserStats = async (req, res, next) => {
     });
     return next(error);
   }
+  return next();
 };

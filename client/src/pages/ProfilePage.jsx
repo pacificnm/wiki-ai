@@ -80,7 +80,7 @@ function ProfilePage() {
   /**
    * Load user profile from API
    */
-  const loadProfile = async () => {
+  const loadProfile = React.useCallback(async () => {
     try {
       setLoading(true);
       const profileData = await userService.getCurrentUserProfile();
@@ -105,14 +105,14 @@ function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [handleError]);
 
   // Load profile on component mount
   useEffect(() => {
     if (user) {
       loadProfile();
     }
-  }, [user]);
+  }, [loadProfile, user]);
 
   // Check for changes when profile updates
   useEffect(() => {

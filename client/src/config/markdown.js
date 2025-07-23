@@ -372,7 +372,7 @@ export const createEditorConfig = (appConfig = 'documentEditor', overrides = {})
   };
 };
 
-export default {
+const markdownConfig = {
   MARKDOWN_PARSER_CONFIG,
   AVAILABLE_PLUGINS,
   PLUGIN_PRESETS,
@@ -385,3 +385,5 @@ export default {
   getViewConfig,
   createEditorConfig
 };
+
+export default markdownConfig;

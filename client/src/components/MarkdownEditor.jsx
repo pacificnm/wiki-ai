@@ -96,7 +96,6 @@ const MarkdownEditor = ({
 
   // Update view config based on split view setting
   const finalViewConfig = { ...config.viewConfig };
-  const splitViewEnabled = allowSplitView !== undefined ? allowSplitView : config.allowSplitView;
   const fullScreenEnabled = allowFullScreen !== undefined ? allowFullScreen : config.allowFullScreen;
 
   // Force single-pane view by setting HTML preview off

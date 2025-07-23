@@ -81,7 +81,7 @@ const CategoryDialog = ({
       setErrors({});
       setSubmitError('');
     }
-  }, [open, category, mode]);
+  }, [open, category, mode, formData.name]);
 
   /**
    * Handle form field changes

@@ -9,13 +9,11 @@ export const getRecentActivities = async (req, res, next) => {
     const {
       limit = 10,
       global = 'false',
-      types,
-      since
+      types
     } = req.query;
 
     const userId = global === 'true' ? null : req.user.dbUser._id;
     const activityTypes = types ? types.split(',') : null;
-    const sinceDate = since ? new Date(since) : null;
 
     const activities = await ActivityService.getActivities({
       userId,
@@ -61,6 +59,7 @@ export const getRecentActivities = async (req, res, next) => {
     });
     return next(error);
   }
+  return next();
 };
 
 /**
@@ -100,4 +99,5 @@ export const getActivityStats = async (req, res, next) => {
     });
     return next(error);
   }
+  return next();
 };

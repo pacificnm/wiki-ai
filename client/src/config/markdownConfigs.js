@@ -110,10 +110,12 @@ export const MOBILE_CONFIG = createEditorConfig('documentEditor', {
   ]
 });
 
-export default {
+const markdownConfigs = {
   BLOG_POST_CONFIG,
   QUICK_NOTE_CONFIG,
   COMMENT_CONFIG,
   DOCUMENTATION_CONFIG,
   MOBILE_CONFIG
 };
+
+export default markdownConfigs;
