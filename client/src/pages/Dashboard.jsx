@@ -24,7 +24,9 @@ import {
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { AuthContext } from '../contexts/AuthContext';
+import { logger } from '../utils/logger';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -111,7 +113,7 @@ const Dashboard = () => {
         setLoading(false);
       }, 1000);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      logger.error('Error fetching dashboard data', { error: error.message });
       setLoading(false);
     }
   };
@@ -151,191 +153,198 @@ const Dashboard = () => {
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
-          Welcome back, {user?.displayName || user?.email}! 👋
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Here&apos;s what&apos;s happening in your wiki today.
-        </Typography>
-      </Box>
+      {/* Loading State */}
+      {loading ? (
+        <LoadingSpinner message="Loading dashboard..." />
+      ) : (
+        <>
+          {/* Header */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Welcome back, {user?.displayName || user?.email}! 👋
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Here&apos;s what&apos;s happening in your wiki today.
+            </Typography>
+          </Box>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    Total Documents
-                  </Typography>
-                  <Typography variant="h4" component="div">
-                    {stats.totalDocuments}
-                  </Typography>
-                </Box>
-                <DocumentIcon color="primary" sx={{ fontSize: 40 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    My Documents
-                  </Typography>
-                  <Typography variant="h4" component="div">
-                    {stats.myDocuments}
-                  </Typography>
-                </Box>
-                <EditIcon color="success" sx={{ fontSize: 40 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    Categories
-                  </Typography>
-                  <Typography variant="h4" component="div">
-                    {stats.totalCategories}
-                  </Typography>
-                </Box>
-                <CategoryIcon color="info" sx={{ fontSize: 40 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    Total Views
-                  </Typography>
-                  <Typography variant="h4" component="div">
-                    2.3K
-                  </Typography>
-                </Box>
-                <TrendingIcon color="warning" sx={{ fontSize: 40 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={3}>
-        {/* Recent Documents */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" component="h2">
-                  Recent Documents
-                </Typography>
-                <Button
-                  startIcon={<AddIcon />}
-                  variant="contained"
-                  onClick={() => navigate('/documents/new')}
-                >
-                  New Document
-                </Button>
-              </Box>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {recentDocuments.map((doc) => (
-                  <Card key={doc.id} variant="outlined">
-                    <CardContent sx={{ pb: 1 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                        <Typography variant="h6" component="h3">
-                          {doc.title}
-                        </Typography>
-                        <Chip label={doc.category} size="small" color="primary" variant="outlined" />
-                      </Box>
-
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {doc.description}
+          {/* Stats Cards */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography color="text.secondary" gutterBottom variant="body2">
+                        Total Documents
                       </Typography>
+                      <Typography variant="h4" component="div">
+                        {stats.totalDocuments}
+                      </Typography>
+                    </Box>
+                    <DocumentIcon color="primary" sx={{ fontSize: 40 }} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
 
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="caption" color="text.secondary">
-                          By {doc.author} • {formatTimeAgo(doc.updatedAt)}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <ViewIcon sx={{ fontSize: 16 }} color="action" />
-                          <Typography variant="caption" color="text.secondary">
-                            {doc.viewCount}
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography color="text.secondary" gutterBottom variant="body2">
+                        My Documents
+                      </Typography>
+                      <Typography variant="h4" component="div">
+                        {stats.myDocuments}
+                      </Typography>
+                    </Box>
+                    <EditIcon color="success" sx={{ fontSize: 40 }} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography color="text.secondary" gutterBottom variant="body2">
+                        Categories
+                      </Typography>
+                      <Typography variant="h4" component="div">
+                        {stats.totalCategories}
+                      </Typography>
+                    </Box>
+                    <CategoryIcon color="info" sx={{ fontSize: 40 }} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography color="text.secondary" gutterBottom variant="body2">
+                        Total Views
+                      </Typography>
+                      <Typography variant="h4" component="div">
+                        2.3K
+                      </Typography>
+                    </Box>
+                    <TrendingIcon color="warning" sx={{ fontSize: 40 }} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={3}>
+            {/* Recent Documents */}
+            <Grid item xs={12} md={8}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" component="h2">
+                      Recent Documents
+                    </Typography>
+                    <Button
+                      startIcon={<AddIcon />}
+                      variant="contained"
+                      onClick={() => navigate('/documents/new')}
+                    >
+                      New Document
+                    </Button>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {recentDocuments.map((doc) => (
+                      <Card key={doc.id} variant="outlined">
+                        <CardContent sx={{ pb: 1 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                            <Typography variant="h6" component="h3">
+                              {doc.title}
+                            </Typography>
+                            <Chip label={doc.category} size="small" color="primary" variant="outlined" />
+                          </Box>
+
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            {doc.description}
                           </Typography>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                    <CardActions>
-                      <Button size="small" startIcon={<ViewIcon />}>
-                        View
-                      </Button>
-                      <Button size="small" startIcon={<EditIcon />}>
-                        Edit
-                      </Button>
-                    </CardActions>
-                  </Card>
-                ))}
-              </Box>
 
-              <Box sx={{ mt: 2, textAlign: 'center' }}>
-                <Button onClick={() => navigate('/documents')}>
-                  View All Documents
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="caption" color="text.secondary">
+                              By {doc.author} • {formatTimeAgo(doc.updatedAt)}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <ViewIcon sx={{ fontSize: 16 }} color="action" />
+                              <Typography variant="caption" color="text.secondary">
+                                {doc.viewCount}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                        <CardActions>
+                          <Button size="small" startIcon={<ViewIcon />}>
+                            View
+                          </Button>
+                          <Button size="small" startIcon={<EditIcon />}>
+                            Edit
+                          </Button>
+                        </CardActions>
+                      </Card>
+                    ))}
+                  </Box>
 
-        {/* Recent Activity */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-                Recent Activity
-              </Typography>
+                  <Box sx={{ mt: 2, textAlign: 'center' }}>
+                    <Button onClick={() => navigate('/documents')}>
+                      View All Documents
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
 
-              <List sx={{ width: '100%' }}>
-                {stats.recentActivity.map((activity, index) => (
-                  <React.Fragment key={activity.id}>
-                    <ListItem alignItems="flex-start" sx={{ px: 0 }}>
-                      <ListItemAvatar>
-                        <Avatar sx={{ width: 32, height: 32 }}>
-                          {getActivityIcon(activity.type)}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="body2">
-                            <strong>{activity.user}</strong> {getActivityText(activity)}
-                          </Typography>
-                        }
-                        secondary={formatTimeAgo(activity.timestamp)}
-                      />
-                    </ListItem>
-                    {index < stats.recentActivity.length - 1 && <Divider variant="inset" component="li" />}
-                  </React.Fragment>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            {/* Recent Activity */}
+            <Grid item xs={12} md={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                    Recent Activity
+                  </Typography>
+
+                  <List sx={{ width: '100%' }}>
+                    {stats.recentActivity.map((activity, index) => (
+                      <React.Fragment key={activity.id}>
+                        <ListItem alignItems="flex-start" sx={{ px: 0 }}>
+                          <ListItemAvatar>
+                            <Avatar sx={{ width: 32, height: 32 }}>
+                              {getActivityIcon(activity.type)}
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={
+                              <Typography variant="body2">
+                                <strong>{activity.user}</strong> {getActivityText(activity)}
+                              </Typography>
+                            }
+                            secondary={formatTimeAgo(activity.timestamp)}
+                          />
+                        </ListItem>
+                        {index < stats.recentActivity.length - 1 && <Divider variant="inset" component="li" />}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </>
+      )}
     </Box>
   );
 };

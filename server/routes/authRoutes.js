@@ -1,7 +1,7 @@
 import express from 'express';
-import { createUser, getUserById, updateUser } from '../config/firebase.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { logger } from '../middleware/logger.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -12,10 +12,8 @@ const router = express.Router();
  */
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
-    // req.user is set by authenticateToken middleware
-    const user = await getUserById(req.user.uid);
-
-    if (!user) {
+    // req.user is set by authenticateToken middleware and includes dbUser
+    if (!req.user || !req.user.dbUser) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -24,7 +22,16 @@ router.get('/profile', authenticateToken, async (req, res) => {
 
     return res.json({
       success: true,
-      data: user
+      data: {
+        id: req.user.dbUser._id,
+        firebaseUid: req.user.dbUser.firebaseUid,
+        email: req.user.dbUser.email,
+        displayName: req.user.dbUser.displayName,
+        role: req.user.dbUser.role,
+        profileImage: req.user.dbUser.profileImage,
+        createdAt: req.user.dbUser.createdAt,
+        lastLogin: req.user.dbUser.lastLogin
+      }
     });
   } catch (error) {
     logger.error('Error fetching user profile', { error: error.message, userId: req.user?.uid });
@@ -42,44 +49,33 @@ router.get('/profile', authenticateToken, async (req, res) => {
  */
 router.post('/register', authenticateToken, async (req, res) => {
   try {
-    const { firebaseUid, email, displayName, profileImage } = req.body;
-
-    // Verify the Firebase UID matches the token
-    if (firebaseUid !== req.user.uid) {
+    // User is already created by authenticateToken middleware if needed
+    // This endpoint now just returns the user data
+    if (!req.user || !req.user.dbUser) {
       return res.status(400).json({
         success: false,
-        message: 'Firebase UID mismatch'
+        message: 'User authentication failed'
       });
     }
 
-    // Check if user already exists
-    const existingUser = await getUserById(firebaseUid);
-    if (existingUser) {
-      return res.json({
-        success: true,
-        data: existingUser,
-        message: 'User already exists'
-      });
-    }
-
-    // Create new user
-    const newUser = await createUser({
-      firebaseUid,
-      email,
-      displayName: displayName || email,
-      profileImage,
-      role: 'user'
-    });
-
-    logger.info('New user registered', { userId: newUser.id, email });
-
-    return res.status(201).json({
+    return res.json({
       success: true,
-      data: newUser,
-      message: 'User registered successfully'
+      data: {
+        id: req.user.dbUser._id,
+        firebaseUid: req.user.dbUser.firebaseUid,
+        email: req.user.dbUser.email,
+        displayName: req.user.dbUser.displayName,
+        role: req.user.dbUser.role,
+        profileImage: req.user.dbUser.profileImage,
+        createdAt: req.user.dbUser.createdAt,
+        lastLogin: req.user.dbUser.lastLogin
+      },
+      message: req.user.dbUser.createdAt.getTime() === req.user.dbUser.lastLogin.getTime()
+        ? 'User registered successfully'
+        : 'User already exists'
     });
   } catch (error) {
-    logger.error('Error registering user', { error: error.message, body: req.body });
+    logger.error('Error in register endpoint', { error: error.message, userId: req.user?.uid });
     return res.status(500).json({
       success: false,
       message: 'Failed to register user'
@@ -99,20 +95,43 @@ router.put('/profile', authenticateToken, async (req, res) => {
     // Remove fields that shouldn't be updated
     delete updates.firebaseUid;
     delete updates.id;
+    delete updates._id;
     delete updates.createdAt;
+    delete updates.lastLogin;
 
-    const updatedUser = await updateUser(req.user.uid, updates);
+    // Update user in database
+    const updatedUser = await User.findOneAndUpdate(
+      { firebaseUid: req.user.uid },
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
 
-    logger.info('User profile updated', { userId: req.user.uid });
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    logger.info('User profile updated', { userId: req.user.uid, updates: Object.keys(updates) });
 
     res.json({
       success: true,
-      data: updatedUser,
+      data: {
+        id: updatedUser._id,
+        firebaseUid: updatedUser.firebaseUid,
+        email: updatedUser.email,
+        displayName: updatedUser.displayName,
+        role: updatedUser.role,
+        profileImage: updatedUser.profileImage,
+        createdAt: updatedUser.createdAt,
+        lastLogin: updatedUser.lastLogin
+      },
       message: 'Profile updated successfully'
     });
   } catch (error) {
     logger.error('Error updating user profile', { error: error.message, userId: req.user?.uid });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to update profile'
     });

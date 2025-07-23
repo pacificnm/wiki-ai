@@ -1,6 +1,8 @@
 import express from 'express';
+import adminRoutes from './admin/adminRoutes.js';
 import authRoutes from './authRoutes.js';
 import categoryRoutes from './categoryRoutes.js';
+import documentRoutes from './documentRoutes.js';
 import errorRoutes from './errorRoutes.js';
 
 const router = express.Router();
@@ -48,11 +50,18 @@ router.use('/errors', errorRoutes);
 router.use('/categories', categoryRoutes);
 
 /**
- * Admin routes (when implemented).
+ * Document management routes.
+ *
+ * @route /api/documents/*
+ */
+router.use('/documents', documentRoutes);
+
+/**
+ * Admin routes.
  *
  * @route /api/admin/*
  */
-// router.use('/admin', adminRoutes);
+router.use('/admin', adminRoutes);
 
 /**
  * User routes (when implemented).

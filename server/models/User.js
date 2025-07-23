@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema({
   displayName: { type: String },
   email: { type: String, required: true, unique: true },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+  department: { type: String },
   profileImage: { type: String },
   createdAt: { type: Date, default: Date.now },
   lastLogin: { type: Date }
@@ -14,10 +16,11 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ firebaseUid: 1 }, { unique: true });
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
+userSchema.index({ status: 1 });
 userSchema.index({ createdAt: 1 });
 
 // Virtual for user's full profile
-userSchema.virtual('profile').get(function() {
+userSchema.virtual('profile').get(function () {
   return {
     id: this._id,
     displayName: this.displayName,

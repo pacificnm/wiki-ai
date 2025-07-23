@@ -26,6 +26,7 @@ import {
   Typography
 } from '@mui/material';
 import React from 'react';
+import { logger } from '../../utils/logger';
 
 function SettingsPage() {
   const [settings, setSettings] = React.useState({
@@ -75,14 +76,14 @@ function SettingsPage() {
 
   const handleSaveSettings = () => {
     // TODO: Implement save functionality
-    console.log('Saving settings:', settings);
+    logger.info('Saving settings', { settings });
     // Show success message
   };
 
   const handleCreateBackup = () => {
     setBackupDialogOpen(false);
     // TODO: Implement backup functionality
-    console.log('Creating backup...');
+    logger.info('Creating backup...');
   };
 
   const storagePercentage = (parseFloat(systemInfo.storageUsed) / parseFloat(systemInfo.storageLimit)) * 100;

@@ -19,9 +19,12 @@ export function useCategories() {
     try {
       setLoading(true);
       const fetchedCategories = await categoryService.getAllCategories();
-      setCategories(fetchedCategories);
+      // Ensure we have an array
+      setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
     } catch (error) {
       handleError(error, 'Failed to fetch categories');
+      // Set empty array on error
+      setCategories([]);
     } finally {
       setLoading(false);
     }
@@ -63,7 +66,7 @@ export function useCategories() {
   const updateCategory = useCallback(async (id, categoryData) => {
     try {
       const updatedCategory = await categoryService.updateCategory(id, categoryData);
-      setCategories(prev => 
+      setCategories(prev =>
         prev.map(cat => cat._id === id ? updatedCategory : cat)
       );
       await fetchStats(); // Refresh stats after update

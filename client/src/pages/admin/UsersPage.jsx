@@ -35,44 +35,29 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import React from 'react';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { useUsers } from '../../hooks/useUsers';
+import { logger } from '../../utils/logger';
 
 function UsersPage() {
-  const [users] = React.useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      role: 'Admin',
-      department: 'IT',
-      status: 'active',
-      lastActive: '2024-01-15 14:30',
-      documentsCreated: 25,
-      joinDate: '2023-06-15'
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      role: 'Editor',
-      department: 'Content Team',
-      status: 'active',
-      lastActive: '2024-01-15 12:45',
-      documentsCreated: 43,
-      joinDate: '2023-07-20'
-    },
-    {
-      id: 3,
-      name: 'Mike Johnson',
-      email: 'mike.johnson@example.com',
-      role: 'Viewer',
-      department: 'Marketing',
-      status: 'inactive',
-      lastActive: '2024-01-10 09:15',
-      documentsCreated: 5,
-      joinDate: '2023-12-01'
-    }
-  ]);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const {
+    users,
+    loading,
+    error,
+    stats,
+    refresh,
+    updateUser,
+    deleteUser,
+    toggleUserStatus,
+    updateUserRole
+  } = useUsers({
+    autoFetch: true,
+    limit: 50 // Show more users in admin panel
+  });
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [selectedUser, setSelectedUser] = React.useState(null);
@@ -100,21 +85,51 @@ function UsersPage() {
     setEditUser({});
   };
 
-  const handleSaveEdit = () => {
-    // TODO: Implement save functionality
-    console.log('Saving user:', editUser);
-    setEditDialogOpen(false);
-    setEditUser({});
+  const handleSaveEdit = async () => {
+    try {
+      await updateUser(selectedUser.id, {
+        displayName: editUser.displayName,
+        role: editUser.role,
+        department: editUser.department,
+        status: editUser.status
+      });
+      setEditDialogOpen(false);
+      setEditUser({});
+      logger.info('User updated successfully', { userId: selectedUser.id });
+    } catch (error) {
+      logger.error('Error updating user:', error);
+    }
+  };
+
+  const handleToggleStatus = async (user) => {
+    try {
+      const newStatus = user.status === 'active' ? 'inactive' : 'active';
+      await toggleUserStatus(user.id, newStatus);
+      handleMenuClose();
+      logger.info('User status toggled', { userId: user.id, newStatus });
+    } catch (error) {
+      logger.error('Error toggling user status:', error);
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (window.confirm(`Are you sure you want to delete ${user.displayName}?`)) {
+      try {
+        await deleteUser(user.id);
+        handleMenuClose();
+        logger.info('User deleted successfully', { userId: user.id });
+      } catch (error) {
+        logger.error('Error deleting user:', error);
+      }
+    }
   };
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'Admin':
+      case 'admin':
         return 'error';
-      case 'Editor':
+      case 'user':
         return 'primary';
-      case 'Viewer':
-        return 'default';
       default:
         return 'default';
     }
@@ -124,9 +139,38 @@ function UsersPage() {
     return status === 'active' ? 'success' : 'default';
   };
 
-  const totalUsers = users.length;
-  const activeUsers = users.filter(user => user.status === 'active').length;
-  const totalDocuments = users.reduce((sum, user) => sum + user.documentsCreated, 0);
+  // Use stats from API or calculate from users array as fallback
+  const totalUsers = stats?.totalUsers || users.length;
+  const activeUsers = stats?.activeUsers || users.filter(user => user.status === 'active').length;
+  const totalDocuments = stats?.totalDocuments || users.reduce((sum, user) => sum + (user.documentsCreated || 0), 0);
+
+  // Show loading spinner on initial load
+  if (loading && users.length === 0) {
+    return (
+      <LoadingSpinner
+        message="Loading users..."
+        centered
+        size="large"
+      />
+    );
+  }
+
+  // Show error state
+  if (error && users.length === 0) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6" color="error" gutterBottom>
+          Failed to Load Users
+        </Typography>
+        <Typography variant="body2" color="text.secondary" paragraph>
+          {error}
+        </Typography>
+        <Button variant="contained" onClick={refresh}>
+          Try Again
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -208,10 +252,10 @@ function UsersPage() {
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
-                        {user.name.split(' ').map(n => n[0]).join('')}
+                        {(user.displayName || user.email).split(' ').map(n => n[0]).join('')}
                       </Avatar>
                       <Box>
-                        <Typography variant="subtitle2">{user.name}</Typography>
+                        <Typography variant="subtitle2">{user.displayName || 'No Name'}</Typography>
                         <Typography variant="body2" color="text.secondary">
                           {user.email}
                         </Typography>
@@ -225,7 +269,7 @@ function UsersPage() {
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>{user.department}</TableCell>
+                  <TableCell>{user.department || 'Not specified'}</TableCell>
                   <TableCell>
                     <Chip
                       label={user.status}
@@ -234,10 +278,10 @@ function UsersPage() {
                       variant="outlined"
                     />
                   </TableCell>
-                  <TableCell>{user.documentsCreated}</TableCell>
+                  <TableCell>{user.documentsCreated || 0}</TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {user.lastActive}
+                      {user.lastActive ? new Date(user.lastActive).toLocaleString() : 'Never'}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
@@ -262,11 +306,11 @@ function UsersPage() {
           <EditIcon sx={{ mr: 1 }} />
           Edit User
         </MenuItem>
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={() => handleToggleStatus(selectedUser)}>
           <BlockIcon sx={{ mr: 1 }} />
           {selectedUser?.status === 'active' ? 'Deactivate' : 'Activate'}
         </MenuItem>
-        <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={() => handleDeleteUser(selectedUser)} sx={{ color: 'error.main' }}>
           <DeleteIcon sx={{ mr: 1 }} />
           Delete User
         </MenuItem>
@@ -280,8 +324,8 @@ function UsersPage() {
             <TextField
               fullWidth
               label="Name"
-              value={editUser.name || ''}
-              onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
+              value={editUser.displayName || ''}
+              onChange={(e) => setEditUser({ ...editUser, displayName: e.target.value })}
               sx={{ mb: 2 }}
             />
 
@@ -292,6 +336,7 @@ function UsersPage() {
               value={editUser.email || ''}
               onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
               sx={{ mb: 2 }}
+              disabled // Email shouldn't be editable
             />
 
             <FormControl fullWidth sx={{ mb: 2 }}>
@@ -301,9 +346,8 @@ function UsersPage() {
                 label="Role"
                 onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}
               >
-                <MenuItem value="Admin">Admin</MenuItem>
-                <MenuItem value="Editor">Editor</MenuItem>
-                <MenuItem value="Viewer">Viewer</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+                <MenuItem value="user">User</MenuItem>
               </Select>
             </FormControl>
 
@@ -314,6 +358,18 @@ function UsersPage() {
               onChange={(e) => setEditUser({ ...editUser, department: e.target.value })}
               sx={{ mb: 2 }}
             />
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={editUser.status || 'active'}
+                label="Status"
+                onChange={(e) => setEditUser({ ...editUser, status: e.target.value })}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
 
             <Alert severity="info">
               Changes will take effect immediately after saving.

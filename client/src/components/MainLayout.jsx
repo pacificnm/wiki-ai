@@ -1,20 +1,21 @@
 import {
-  Menu as MenuIcon,
-  Category as CategoryIcon,
-  Description as DescriptionIcon,
-  People as PeopleIcon,
-  Dashboard as DashboardIcon,
-  Settings as SettingsIcon,
-  Logout as LogoutIcon,
-  Person as PersonIcon,
-  Favorite as FavoriteIcon,
-  Search as SearchIcon,
   Add as AddIcon,
+  Category as CategoryIcon,
   Brightness4 as DarkModeIcon,
-  Brightness7 as LightModeIcon
+  Dashboard as DashboardIcon,
+  Description as DescriptionIcon,
+  Favorite as FavoriteIcon,
+  Brightness7 as LightModeIcon,
+  Logout as LogoutIcon,
+  Menu as MenuIcon,
+  People as PeopleIcon,
+  Person as PersonIcon,
+  Search as SearchIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import {
   AppBar,
+  Avatar,
   Box,
   CssBaseline,
   Divider,
@@ -25,20 +26,21 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Toolbar,
-  Typography,
-  Avatar,
   Menu,
   MenuItem,
+  Toolbar,
   Tooltip,
-  useTheme,
-  useMediaQuery
+  Typography,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { useState, useContext } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useContext, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { logger } from '../utils/logger';
+import LoadingSpinner from './LoadingSpinner';
 
 const drawerWidth = 260;
 
@@ -125,9 +127,26 @@ const MainLayout = ({ children }) => {
     }
   ];
 
-  const filteredMenuItems = menuItems.filter(item =>
-    !item.roles || item.roles.includes(user?.role)
-  );
+  const filteredMenuItems = menuItems.filter(item => {
+    // If no roles specified, show to everyone
+    if (!item.roles) return true;
+
+    // If user has no role, default to 'user' role
+    const userRole = user?.role || 'user';
+
+    // Debug logging for development
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug('Menu item filtering', {
+        userRole,
+        itemRoles: item.roles,
+        itemText: item.text,
+        allowed: item.roles.includes(userRole)
+      });
+    }
+
+    // Check if user's role is in the allowed roles
+    return item.roles.includes(userRole);
+  });
 
   const drawer = (
     <Box>
@@ -202,18 +221,7 @@ const MainLayout = ({ children }) => {
   );
 
   if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh'
-        }}
-      >
-        <Typography>Loading...</Typography>
-      </Box>
-    );
+    return <LoadingSpinner message="Loading application..." minHeight="100vh" />;
   }
 
   return (
@@ -296,7 +304,7 @@ const MainLayout = ({ children }) => {
                   {user?.email}
                 </Typography>
                 <Typography variant="caption" display="block" color="text.secondary">
-                  Role: {user?.role}
+                  Role: {user?.role || 'user (default)'}
                 </Typography>
               </Box>
             </MenuItem>

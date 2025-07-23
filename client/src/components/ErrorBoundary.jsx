@@ -19,6 +19,7 @@ import {
   Typography
 } from '@mui/material';
 import React from 'react';
+import { logger } from '../utils/logger';
 
 /**
  * Error boundary component to catch and display React errors.
@@ -67,11 +68,12 @@ class ErrorBoundary extends React.Component {
       errorInfo
     });
 
-    // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error Boundary caught an error:', error);
-      console.error('Component stack:', errorInfo.componentStack);
-    }
+    // Log error using our logging utility
+    logger.error('Error Boundary caught an error', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack
+    });
 
     // Send error to monitoring service (e.g., Sentry, LogRocket, etc.)
     this.logErrorToService(error, errorInfo);
@@ -112,10 +114,10 @@ class ErrorBoundary extends React.Component {
         },
         body: JSON.stringify(errorData)
       }).catch(err => {
-        console.error('Failed to log error to service:', err);
+        logger.error('Failed to log error to service', { error: err.message });
       });
     } else {
-      console.log('Error data that would be sent to monitoring service:', errorData);
+      logger.debug('Error data that would be sent to monitoring service', errorData);
     }
   };  /**
    * Handle retry button click.

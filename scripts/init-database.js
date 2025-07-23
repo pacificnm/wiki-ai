@@ -1,17 +1,13 @@
 #!/usr/bin/env node
 
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import { connectToDatabase, initializeDatabase } from '../server/config/database.js';
 import { logger } from '../server/middleware/logger.js';
 
 // Import all models to ensure they're registered
 import {
-  User,
-  Document,
-  Version,
   Category,
-  Comment
+  User
 } from '../server/models/index.js';
 
 dotenv.config();

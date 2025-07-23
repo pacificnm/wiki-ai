@@ -11,13 +11,13 @@ import {
   CardActions,
   CardContent,
   Chip,
-  CircularProgress,
   Fab,
   Grid,
   LinearProgress,
   Paper,
   Typography
 } from '@mui/material';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useCategories } from '../hooks/useCategories.js';
 
 
@@ -28,16 +28,16 @@ import { useCategories } from '../hooks/useCategories.js';
  */
 const getCategoryColor = (name) => {
   const colors = [
-    '#1976d2', '#388e3c', '#f57c00', '#7b1fa2', 
+    '#1976d2', '#388e3c', '#f57c00', '#7b1fa2',
     '#d32f2f', '#455a64', '#00796b', '#5d4037',
     '#616161', '#e91e63', '#9c27b0', '#3f51b5'
   ];
-  
+
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  
+
   return colors[Math.abs(hash) % colors.length];
 };
 
@@ -56,7 +56,7 @@ const getCategoryIcon = (name) => {
     documentation: '🔧',
     meeting: '📝',
     note: '📝',
-    policy: '�',
+    policy: '📄',
     procedure: '⚙️',
     help: '❓',
     support: '🆘',
@@ -65,14 +65,14 @@ const getCategoryIcon = (name) => {
     template: '📋',
     example: '💡',
   };
-  
+
   const lowerName = name.toLowerCase();
   for (const [key, icon] of Object.entries(iconMap)) {
     if (lowerName.includes(key)) {
       return icon;
     }
   }
-  
+
   return '📁'; // Default folder icon
 };
 
@@ -83,14 +83,14 @@ const getCategoryIcon = (name) => {
  */
 const getRelativeTime = (date) => {
   if (!date) return 'No recent activity';
-  
+
   const now = new Date();
   const past = new Date(date);
   const diffMs = now - past;
   const diffMinutes = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
-  
+
   if (diffMinutes < 60) {
     return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
   } else if (diffHours < 24) {
@@ -103,17 +103,16 @@ const getRelativeTime = (date) => {
 function CategoriesPage() {
   const { categories, loading, stats } = useCategories();
 
+  // Ensure categories is always an array
+  const safeCategories = Array.isArray(categories) ? categories : [];
+
   // Calculate stats from categories data
-  const totalDocuments = stats?.totalDocuments || categories.reduce((sum, cat) => sum + (cat.documentCount || 0), 0);
-  const totalCategories = stats?.totalCategories || categories.length;
+  const totalDocuments = stats?.totalDocuments || safeCategories.reduce((sum, cat) => sum + (cat.documentCount || 0), 0);
+  const totalCategories = stats?.totalCategories || safeCategories.length;
   const avgDocumentsPerCategory = totalCategories > 0 ? Math.round(totalDocuments / totalCategories) : 0;
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <CircularProgress size={60} />
-      </Box>
-    );
+    return <LoadingSpinner message="Loading categories..." minHeight="50vh" />;
   }
 
   return (
@@ -165,7 +164,7 @@ function CategoriesPage() {
         </Grid>
       </Paper>
 
-      {categories.length === 0 ? (
+      {safeCategories.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
             No categories found
@@ -179,11 +178,11 @@ function CategoriesPage() {
         </Paper>
       ) : (
         <Grid container spacing={3}>
-          {categories.map((category) => {
-            const color = getCategoryColor(category.name);
-            const icon = getCategoryIcon(category.name);
+          {safeCategories.map((category) => {
+            const color = getCategoryColor(category.name || 'Unknown');
+            const icon = getCategoryIcon(category.name || 'Unknown');
             const documentCount = category.documentCount || 0;
-            const maxDocuments = Math.max(...categories.map(c => c.documentCount || 0));
+            const maxDocuments = safeCategories.length > 0 ? Math.max(...safeCategories.map(c => c.documentCount || 0)) : 1;
             const recentActivity = getRelativeTime(category.updatedAt);
 
             return (

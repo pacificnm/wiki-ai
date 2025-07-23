@@ -31,7 +31,7 @@ export const getAllCategories = async (req, res, next) => {
       count: categoriesWithCounts.length
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -63,7 +63,7 @@ export const getCategoryById = async (req, res, next) => {
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -125,7 +125,7 @@ export const createCategory = async (req, res, next) => {
     if (error.code === 11000) {
       return next(new AppError('Category with this name already exists', 409));
     }
-    next(error);
+    return next(error);
   }
 };
 
@@ -219,7 +219,7 @@ export const updateCategory = async (req, res, next) => {
     if (error.code === 11000) {
       return next(new AppError('Category with this name already exists', 409));
     }
-    next(error);
+    return next(error);
   }
 };
 
@@ -257,7 +257,7 @@ export const deleteCategory = async (req, res, next) => {
       message: 'Category deleted successfully'
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -304,7 +304,7 @@ export const getCategoryStats = async (req, res, next) => {
       averageDocumentsPerCategory: totalCategories > 0 ? Math.round(totalDocuments / totalCategories) : 0
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 

@@ -1,4 +1,3 @@
-
 // 1. Core and third-party imports
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -35,7 +34,10 @@ async function startServer() {
         'https://curly-train-7jgg75w5w2rr57-3000.app.github.dev',
         /^https:\/\/.*\.app\.github\.dev$/
       ],
-      credentials: true
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      optionsSuccessStatus: 200
     }));
     app.use(express.json());
     app.use(morgan('combined', { stream: morganStream }));

@@ -1,4 +1,5 @@
-import { verifyIdToken, getUserById } from '../config/firebase.js';
+import { getUserById, verifyIdToken } from '../config/firebase.js';
+import User from '../models/User.js';
 import { logger } from './logger.js';
 
 /**
@@ -54,16 +55,54 @@ export async function authenticateToken(req, res, next) {
     // Get additional user data from Firebase Auth
     const userRecord = await getUserById(decodedToken.uid);
 
-    // Attach user data to request object
+    // Find or create user in MongoDB
+    let dbUser = await User.findOne({ firebaseUid: decodedToken.uid });
+
+    if (!dbUser) {
+      // Create new user in database
+      dbUser = new User({
+        firebaseUid: decodedToken.uid,
+        email: decodedToken.email || userRecord.email,
+        displayName: decodedToken.name || userRecord.displayName || (decodedToken.email || userRecord.email),
+        profileImage: decodedToken.picture || userRecord.photoURL,
+        role: decodedToken.role || 'user',
+        lastLogin: new Date()
+      });
+
+      await dbUser.save();
+
+      logger.info('New user created in database', {
+        uid: dbUser.firebaseUid,
+        email: dbUser.email,
+        role: dbUser.role
+      });
+    } else {
+      // Update last login and profile info
+      dbUser.lastLogin = new Date();
+
+      // Update profile if changed
+      if (dbUser.displayName !== (decodedToken.name || userRecord.displayName)) {
+        dbUser.displayName = decodedToken.name || userRecord.displayName || dbUser.displayName;
+      }
+
+      if (dbUser.profileImage !== (decodedToken.picture || userRecord.photoURL)) {
+        dbUser.profileImage = decodedToken.picture || userRecord.photoURL;
+      }
+
+      await dbUser.save();
+    }
+
+    // Attach user data to request object (combining Firebase and DB data)
     req.user = {
       uid: decodedToken.uid,
       email: decodedToken.email || userRecord.email,
       emailVerified: decodedToken.email_verified || userRecord.emailVerified,
       displayName: decodedToken.name || userRecord.displayName,
       photoURL: decodedToken.picture || userRecord.photoURL,
-      role: decodedToken.role || 'user', // From custom claims
+      role: dbUser.role, // Use role from database, not Firebase claims
       customClaims: decodedToken,
-      firebaseUser: userRecord
+      firebaseUser: userRecord,
+      dbUser: dbUser // Add database user object
     };
 
     logger.info('User authenticated successfully', {
@@ -126,6 +165,32 @@ export async function optionalAuth(req, res, next) {
     const decodedToken = await verifyIdToken(idToken);
     const userRecord = await getUserById(decodedToken.uid);
 
+    // Find or create user in MongoDB
+    let dbUser = await User.findOne({ firebaseUid: decodedToken.uid });
+
+    if (!dbUser) {
+      // Create new user in database
+      dbUser = new User({
+        firebaseUid: decodedToken.uid,
+        email: decodedToken.email || userRecord.email,
+        displayName: decodedToken.name || userRecord.displayName || (decodedToken.email || userRecord.email),
+        profileImage: decodedToken.picture || userRecord.photoURL,
+        role: decodedToken.role || 'user',
+        lastLogin: new Date()
+      });
+
+      await dbUser.save();
+
+      logger.info('New user created in database (optional auth)', {
+        uid: dbUser.firebaseUid,
+        email: dbUser.email
+      });
+    } else {
+      // Update last login
+      dbUser.lastLogin = new Date();
+      await dbUser.save();
+    }
+
     // Attach user data to request object
     req.user = {
       uid: decodedToken.uid,
@@ -133,9 +198,10 @@ export async function optionalAuth(req, res, next) {
       emailVerified: decodedToken.email_verified || userRecord.emailVerified,
       displayName: decodedToken.name || userRecord.displayName,
       photoURL: decodedToken.picture || userRecord.photoURL,
-      role: decodedToken.role || 'user',
+      role: dbUser.role, // Use role from database
       customClaims: decodedToken,
-      firebaseUser: userRecord
+      firebaseUser: userRecord,
+      dbUser: dbUser
     };
 
     logger.info('Optional auth successful', {
