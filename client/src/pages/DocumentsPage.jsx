@@ -1,26 +1,23 @@
 import {
   Add as AddIcon,
-  Article as ArticleIcon,
   Search as SearchIcon
 } from '@mui/icons-material';
 import {
   Box,
   Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
   Fab,
   Grid,
   InputAdornment,
   Paper,
-  Switch,
   TextField,
   Typography
 } from '@mui/material';
+import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DocumentCard from '../components/DocumentCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useDocuments } from '../hooks/useDocuments';
+import favoriteService from '../services/favoriteService';
 import { logger } from '../utils/logger';
 
 function DocumentsPage() {
@@ -38,10 +35,11 @@ function DocumentsPage() {
     refresh,
     loadMore,
     deleteDocument,
-    updateDocument
+    updateDocument,
+    updateDocumentFavoriteStatus
   } = useDocuments({
     autoFetch: true,
-    limit: 12 // Show 12 documents per page
+    limit: 24 // Show 24 documents per page (8 per row on large screens)
   });
 
   // Handle search input change with debouncing
@@ -92,6 +90,49 @@ function DocumentsPage() {
     }
   };
 
+  // Handle favorite toggle
+  const handleToggleFavorite = async (documentId) => {
+    try {
+      // Find the document to get current favorite status
+      const document = documents.find(doc => doc.id === documentId);
+      if (!document) return;
+
+      if (document.isFavorite) {
+        await favoriteService.removeFromFavorites(documentId);
+        logger.info('Document removed from favorites', { documentId });
+        updateDocumentFavoriteStatus(documentId, false);
+      } else {
+        await favoriteService.addToFavorites(documentId);
+        logger.info('Document added to favorites', { documentId });
+        updateDocumentFavoriteStatus(documentId, true);
+      }
+
+    } catch (error) {
+      logger.error('Error toggling favorite status', { documentId, error: error.message });
+    }
+  };
+
+  // Endless scroll handler
+  const handleScroll = useCallback(() => {
+    if (loading || !hasMore) return;
+
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+
+    // Load more when user scrolls to within 1000px of the bottom
+    if (scrollTop + windowHeight >= documentHeight - 1000) {
+      logger.debug('Endless scroll triggered');
+      loadMore();
+    }
+  }, [loading, hasMore, loadMore]);
+
+  // Add scroll event listener for endless scroll
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
   // Handle create new document
   const handleCreateDocument = () => {
     logger.info('Creating new document');
@@ -100,6 +141,13 @@ function DocumentsPage() {
 
   // Handle load more documents
   const handleLoadMore = () => {
+    logger.debug('Load more clicked', {
+      hasMore,
+      loading,
+      documentsCount: documents.length,
+      total
+    });
+
     if (hasMore && !loading) {
       loadMore();
     }
@@ -168,65 +216,17 @@ function DocumentsPage() {
       <Grid container spacing={3}>
         {documents.map((doc) => (
           <Grid item xs={12} md={6} lg={4} key={doc.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                  <ArticleIcon sx={{ mr: 1, mt: 0.5, color: 'primary.main' }} />
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" component="h2" gutterBottom>
-                      {doc.title}
-                    </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                      <Chip
-                        label={doc.isPublished ? "Published" : "Draft"}
-                        size="small"
-                        color={doc.isPublished ? "success" : "warning"}
-                      />
-                      <Switch
-                        checked={doc.isPublished}
-                        onChange={() => handlePublishToggle(doc.id, doc.isPublished, doc.title)}
-                        size="small"
-                        disabled={loading}
-                      />
-                    </Box>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
-                  {doc.tags?.map((tag) => (
-                    <Chip key={tag} label={tag} size="small" variant="outlined" />
-                  ))}
-                </Box>
-
-                <Typography variant="caption" color="text.secondary">
-                  {doc.category} • By {doc.author} • Updated {new Date(doc.updatedAt).toLocaleDateString()}
-                  {doc.viewCount > 0 && ` • ${doc.viewCount} views`}
-                </Typography>
-              </CardContent>
-
-              <CardActions>
-                <Button
-                  size="small"
-                  color="primary"
-                  onClick={() => handleViewDocument(doc.id)}
-                >
-                  View
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() => handleEditDocument(doc.id)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="small"
-                  color="error"
-                  onClick={() => handleDeleteDocument(doc.id, doc.title)}
-                >
-                  Delete
-                </Button>
-              </CardActions>
-            </Card>
+            <DocumentCard
+              document={doc}
+              onView={() => handleViewDocument(doc.id)}
+              onEdit={() => handleEditDocument(doc.id)}
+              onToggleFavorite={handleToggleFavorite}
+              onDelete={() => handleDeleteDocument(doc.id, doc.title)}
+              showFavorite={true}
+              showDelete={true}
+              showViewCount={true}
+              layout="grid"
+            />
           </Grid>
         ))}
       </Grid>
@@ -235,12 +235,23 @@ function DocumentsPage() {
       {hasMore && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <Button
-            variant="outlined"
+            variant="contained"
+            size="large"
             onClick={handleLoadMore}
             disabled={loading}
+            sx={{ minWidth: 200 }}
           >
-            {loading ? 'Loading...' : 'Load More Documents'}
+            {loading ? 'Loading...' : `Load More (${documents.length} of ${total})`}
           </Button>
+        </Box>
+      )}
+
+      {/* Show total count when all loaded */}
+      {!hasMore && documents.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <Typography variant="body2" color="text.secondary">
+            Showing all {total} documents
+          </Typography>
         </Box>
       )}
 

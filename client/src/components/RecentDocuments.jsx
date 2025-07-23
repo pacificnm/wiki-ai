@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useError } from '../hooks/useError';
 import documentService from '../services/documentService';
+import favoriteService from '../services/favoriteService';
 import { logger } from '../utils/logger';
 import DocumentCard from './DocumentCard';
 import LoadingSpinner from './LoadingSpinner';
@@ -46,7 +47,21 @@ const RecentDocuments = ({
         // Add any other options for sorting by recent updates
       });
 
-      setDocuments(documentsData.documents || []);
+      // Get user favorites and merge with documents
+      let documentsWithFavorites = documentsData.documents || [];
+      try {
+        const favorites = await favoriteService.getFavorites();
+        const favoriteMap = new Set(favorites.map(fav => fav.id));
+        documentsWithFavorites = documentsWithFavorites.map(doc => ({
+          ...doc,
+          isFavorite: favoriteMap.has(doc.id)
+        }));
+      } catch (favoriteError) {
+        logger.warn('Failed to load favorites for recent documents', { error: favoriteError.message });
+        documentsWithFavorites = documentsWithFavorites.map(doc => ({ ...doc, isFavorite: false }));
+      }
+
+      setDocuments(documentsWithFavorites);
 
       logger.info('Recent documents loaded successfully', {
         count: documentsData.documents?.length || 0
@@ -91,11 +106,43 @@ const RecentDocuments = ({
    * Handle editing a document
    * @param {Object} document - Document to edit
    */
-  const handleEditDocument = (document) => {
-    navigate(`/documents/${document.id || document._id}/edit`);
-  };
+  const handleEditDocument = useCallback((document) => {
+    const docId = document.id || document._id;
+    logger.info('Navigating to edit document', { documentId: docId });
+    navigate(`/documents/${docId}/edit`);
+  }, [navigate]);
 
   /**
+   * Handle favorite toggle
+   */
+  const handleToggleFavorite = useCallback(async (documentId) => {
+    try {
+      // Find the document to get current favorite status
+      const document = documents.find(doc => doc.id === documentId);
+      if (!document) return;
+
+      if (document.isFavorite) {
+        await favoriteService.removeFromFavorites(documentId);
+        logger.info('Document removed from favorites', { documentId });
+      } else {
+        await favoriteService.addToFavorites(documentId);
+        logger.info('Document added to favorites', { documentId });
+      }
+
+      // Update local state
+      setDocuments(prevDocs =>
+        prevDocs.map(doc =>
+          doc.id === documentId
+            ? { ...doc, isFavorite: !doc.isFavorite }
+            : doc
+        )
+      );
+
+    } catch (error) {
+      logger.error('Error toggling favorite status', { documentId, error: error.message });
+      handleError(error, 'Failed to update favorite status');
+    }
+  }, [documents, handleError]);  /**
    * Handle creating a new document
    */
   const handleNewDocument = () => {
@@ -176,6 +223,8 @@ const RecentDocuments = ({
                   document={doc}
                   onView={handleViewDocument}
                   onEdit={handleEditDocument}
+                  onToggleFavorite={handleToggleFavorite}
+                  showFavorite={true}
                   showViewCount={true}
                   layout="list"
                   formatTimeAgo={formatTimeAgo}

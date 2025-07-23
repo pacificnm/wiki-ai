@@ -35,11 +35,15 @@
     "mongodb": "^6.17.0",
     "mongoose": "^7.5.0",
     "morgan": "^1.10.1",
+    "multer": "^2.0.2",
     "notistack": "^3.0.2",
+    "openai": "^5.10.2",
+    "pdf-parse": "^1.1.1",
     "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
     "winston": "^3.17.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {

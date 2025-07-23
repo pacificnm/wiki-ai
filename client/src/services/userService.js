@@ -335,6 +335,77 @@ class UserService {
       throw error;
     }
   }
+
+  /**
+   * Get current user profile
+   * @returns {Promise<Object>} User profile data
+   */
+  async getCurrentUserProfile() {
+    try {
+      const headers = await this._getAuthHeaders();
+
+      const response = await fetch(`${this.baseURL}/api/auth/profile`, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch profile');
+      }
+
+      logger.info('User profile fetched successfully');
+      return data.data;
+    } catch (error) {
+      logger.error('Error fetching user profile', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Update current user profile
+   * @param {Object} profileData - Profile data to update
+   * @returns {Promise<Object>} Updated profile data
+   */
+  async updateCurrentUserProfile(profileData) {
+    try {
+      const headers = await this._getAuthHeaders();
+
+      const response = await fetch(`${this.baseURL}/api/auth/profile`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(profileData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to update profile: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to update profile');
+      }
+
+      logger.info('User profile updated successfully', {
+        updatedFields: Object.keys(profileData)
+      });
+
+      return data.data;
+    } catch (error) {
+      logger.error('Error updating user profile', {
+        error: error.message,
+        profileData: Object.keys(profileData)
+      });
+      throw error;
+    }
+  }
 }
 
 const userService = new UserService();

@@ -1,6 +1,7 @@
 import { useSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 import documentService from '../services/documentService';
+import favoriteService from '../services/favoriteService';
 import { logger } from '../utils/logger';
 import { useError } from './useError';
 
@@ -30,10 +31,55 @@ export function useDocuments(options = {}) {
   const { handleError } = useError();
 
   /**
+   * Get user favorites and create a lookup map
+   */
+  const getUserFavorites = useCallback(async () => {
+    try {
+      const favorites = await favoriteService.getFavorites();
+      const favoriteMap = new Set(favorites.map(fav => fav.id));
+      return favoriteMap;
+    } catch (error) {
+      logger.warn('Failed to load user favorites', { error: error.message });
+      return new Set();
+    }
+  }, []);
+
+  /**
+   * Merge favorite status with documents
+   */
+  const mergeDocumentsWithFavorites = useCallback(async (documents) => {
+    try {
+      const favoriteMap = await getUserFavorites();
+      return documents.map(doc => ({
+        ...doc,
+        isFavorite: favoriteMap.has(doc.id)
+      }));
+    } catch (error) {
+      logger.warn('Failed to merge favorites with documents', { error: error.message });
+      return documents.map(doc => ({ ...doc, isFavorite: false }));
+    }
+  }, [getUserFavorites]);
+
+  /**
    * Clear error state
    */
   const clearError = useCallback(() => {
     setError(null);
+  }, []);
+
+  /**
+   * Update favorite status for a document
+   * @param {string} documentId - Document ID
+   * @param {boolean} isFavorite - New favorite status
+   */
+  const updateDocumentFavoriteStatus = useCallback((documentId, isFavorite) => {
+    setDocuments(prevDocs =>
+      prevDocs.map(doc =>
+        doc.id === documentId
+          ? { ...doc, isFavorite }
+          : doc
+      )
+    );
   }, []);
 
   /**
@@ -78,22 +124,27 @@ export function useDocuments(options = {}) {
         skip: currentPage * limit
       });
 
+      logger.debug('Raw API response', { response });
+
       const newDocuments = response.documents || [];
+      const documentsWithFavorites = await mergeDocumentsWithFavorites(newDocuments);
       const totalCount = response.total || 0;
 
       if (isLoadMore) {
-        setDocuments(prevDocs => [...prevDocs, ...newDocuments]);
+        setDocuments(prevDocs => [...prevDocs, ...documentsWithFavorites]);
       } else {
-        setDocuments(newDocuments);
+        setDocuments(documentsWithFavorites);
       }
 
       setTotal(totalCount);
-      setHasMore(newDocuments.length === limit && (currentPage + 1) * limit < totalCount);
+      setHasMore(documentsWithFavorites.length === limit && (currentPage + 1) * limit < totalCount);
 
       logger.debug('Documents fetched successfully', {
-        count: newDocuments.length,
+        count: documentsWithFavorites.length,
         total: totalCount,
-        page: currentPage
+        page: currentPage,
+        hasMore: documentsWithFavorites.length === limit && (currentPage + 1) * limit < totalCount,
+        loadedSoFar: isLoadMore ? `${(currentPage + 1) * limit}` : documentsWithFavorites.length
       });
 
     } catch (err) {
@@ -114,9 +165,45 @@ export function useDocuments(options = {}) {
       return;
     }
 
-    setPage(prevPage => prevPage + 1);
-    await fetchDocuments({ isLoadMore: true, silent: true });
-  }, [hasMore, loading, fetchDocuments]);
+    const nextPage = page + 1;
+    setPage(nextPage);
+
+    // Directly use nextPage instead of relying on state update
+    try {
+      setLoading(true);
+
+      const response = await documentService.getAllDocuments({
+        search: searchTerm,
+        category: category || undefined,
+        limit,
+        skip: nextPage * limit
+      });
+
+      logger.debug('Load more API response', { response });
+
+      const newDocuments = response.documents || [];
+      const documentsWithFavorites = await mergeDocumentsWithFavorites(newDocuments);
+      const totalCount = response.total || 0;
+
+      // Append new documents to existing ones
+      setDocuments(prevDocs => [...prevDocs, ...documentsWithFavorites]);
+      setTotal(totalCount);
+      setHasMore(documentsWithFavorites.length === limit && (nextPage + 1) * limit < totalCount);
+
+      logger.debug('More documents loaded successfully', {
+        count: documentsWithFavorites.length,
+        total: totalCount,
+        page: nextPage,
+        hasMore: documentsWithFavorites.length === limit && (nextPage + 1) * limit < totalCount
+      });
+
+    } catch (err) {
+      logger.error('Error loading more documents', { error: err.message });
+      handleError(err, 'Failed to load more documents');
+    } finally {
+      setLoading(false);
+    }
+  }, [hasMore, loading, page, searchTerm, category, limit, mergeDocumentsWithFavorites, handleError]);
 
   /**
    * Refresh documents (reset and fetch)
@@ -286,6 +373,7 @@ export function useDocuments(options = {}) {
     filterByCategory,
     createDocument,
     updateDocument,
+    updateDocumentFavoriteStatus,
     deleteDocument,
     getDocument,
     clearError,

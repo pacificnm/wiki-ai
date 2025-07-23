@@ -1,29 +1,25 @@
 import {
   Add as AddIcon,
   ArrowBack as ArrowBackIcon,
-  Article as ArticleIcon,
   Search as SearchIcon
 } from '@mui/icons-material';
 import {
   Box,
   Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
   Fab,
   Grid,
   InputAdornment,
   Paper,
-  Switch,
   TextField,
   Typography
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import DocumentCard from '../components/DocumentCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useCategories } from '../hooks/useCategories';
 import { useDocuments } from '../hooks/useDocuments';
+import favoriteService from '../services/favoriteService';
 import { logger } from '../utils/logger';
 
 function DocumentsByCategory() {
@@ -31,6 +27,7 @@ function DocumentsByCategory() {
   const navigate = useNavigate();
   const { getCategoryById } = useCategories();
   const [category, setCategory] = useState(null);
+  const [initialCategoryLoaded, setInitialCategoryLoaded] = useState(false);
 
   const {
     documents,
@@ -41,43 +38,40 @@ function DocumentsByCategory() {
     searchTerm,
     search,
     setSearchTerm,
-    filterByCategory,
     refresh,
     loadMore,
     deleteDocument,
-    updateDocument
+    updateDocument,
+    setCategory: setHookCategory,
+    fetchDocuments,
+    reset,
+    updateDocumentFavoriteStatus
   } = useDocuments({
-    autoFetch: false, // We'll fetch manually with category filter
+    autoFetch: false, // We'll manually control fetching
+    initialCategory: '', // Start empty
     limit: 12 // Show 12 documents per page
   });
 
-  // Load category information
+  // Load category information and set up documents
   useEffect(() => {
     if (categoryId) {
+      // Clear documents immediately when category changes
+      reset();
+      setInitialCategoryLoaded(false);
+
       const categoryData = getCategoryById(categoryId);
       setCategory(categoryData);
-    }
-  }, [categoryId, getCategoryById]);
 
-  // Fetch documents for this category
-  useEffect(() => {
-    if (category) {
-      fetchDocumentsByCategory();
-    }
-  }, [category]);
+      if (categoryData?.name) {
+        // Set the category in the hook state
+        setHookCategory(categoryData.name);
+        // Then fetch documents for this category
+        fetchDocuments({ resetData: true });
+      }
 
-  const fetchDocumentsByCategory = async () => {
-    try {
-      // Filter documents by category name
-      await filterByCategory(category.name);
-    } catch (error) {
-      logger.error('Error fetching documents by category', {
-        categoryId,
-        categoryName: category?.name,
-        error: error.message
-      });
+      setInitialCategoryLoaded(true);
     }
-  };
+  }, [categoryId, getCategoryById, reset, setHookCategory, fetchDocuments]);
 
   // Handle search input change with debouncing
   const handleSearchChange = (e) => {
@@ -107,7 +101,7 @@ function DocumentsByCategory() {
         await deleteDocument(documentId);
         logger.info('Document deleted successfully', { documentId });
         // Refresh the list
-        fetchDocumentsByCategory();
+        refresh();
       } catch (error) {
         logger.error('Error deleting document', { documentId, error: error.message });
       }
@@ -126,6 +120,28 @@ function DocumentsByCategory() {
       logger.info(`Document ${action}ed successfully`, { documentId, title });
     } catch (error) {
       logger.error(`Error ${action}ing document`, { documentId, error: error.message });
+    }
+  };
+
+  // Handle favorite toggle
+  const handleToggleFavorite = async (documentId) => {
+    try {
+      // Find the document to get current favorite status
+      const document = documents.find(doc => doc.id === documentId);
+      if (!document) return;
+
+      if (document.isFavorite) {
+        await favoriteService.removeFromFavorites(documentId);
+        logger.info('Document removed from favorites', { documentId });
+        updateDocumentFavoriteStatus(documentId, false);
+      } else {
+        await favoriteService.addToFavorites(documentId);
+        logger.info('Document added to favorites', { documentId });
+        updateDocumentFavoriteStatus(documentId, true);
+      }
+
+    } catch (error) {
+      logger.error('Error toggling favorite status', { documentId, error: error.message });
     }
   };
 
@@ -230,69 +246,17 @@ function DocumentsByCategory() {
       <Grid container spacing={3}>
         {documents.map((doc) => (
           <Grid item xs={12} md={6} lg={4} key={doc.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                  <ArticleIcon sx={{ mr: 1, mt: 0.5, color: 'primary.main' }} />
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" component="h2" gutterBottom>
-                      {doc.title}
-                    </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                      <Chip
-                        label={doc.isPublished ? "Published" : "Draft"}
-                        size="small"
-                        color={doc.isPublished ? "success" : "warning"}
-                      />
-                      <Switch
-                        checked={doc.isPublished}
-                        onChange={() => handlePublishToggle(doc.id, doc.isPublished, doc.title)}
-                        size="small"
-                        disabled={loading}
-                      />
-                    </Box>
-                  </Box>
-                </Box>
-
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  {doc.excerpt}
-                </Typography>
-
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
-                  {doc.tags?.map((tag) => (
-                    <Chip key={tag} label={tag} size="small" variant="outlined" />
-                  ))}
-                </Box>
-
-                <Typography variant="caption" color="text.secondary">
-                  By {doc.author} • Updated {new Date(doc.updatedAt).toLocaleDateString()}
-                  {doc.viewCount > 0 && ` • ${doc.viewCount} views`}
-                </Typography>
-              </CardContent>
-
-              <CardActions>
-                <Button
-                  size="small"
-                  color="primary"
-                  onClick={() => handleViewDocument(doc.id)}
-                >
-                  View
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() => handleEditDocument(doc.id)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="small"
-                  color="error"
-                  onClick={() => handleDeleteDocument(doc.id, doc.title)}
-                >
-                  Delete
-                </Button>
-              </CardActions>
-            </Card>
+            <DocumentCard
+              document={doc}
+              onView={() => handleViewDocument(doc.id)}
+              onEdit={() => handleEditDocument(doc.id)}
+              onToggleFavorite={handleToggleFavorite}
+              onDelete={() => handleDeleteDocument(doc.id, doc.title)}
+              showFavorite={true}
+              showDelete={true}
+              showViewCount={true}
+              layout="grid"
+            />
           </Grid>
         ))}
       </Grid>

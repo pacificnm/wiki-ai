@@ -8,11 +8,14 @@ import {
   Paper,
   Typography
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import DocumentCard from '../components/DocumentCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useFavorites } from '../hooks/useFavorites';
+import { logger } from '../utils/logger';
 
 function FavoritesPage() {
+  const navigate = useNavigate();
   const {
     favorites,
     loading,
@@ -20,19 +23,26 @@ function FavoritesPage() {
     removeFromFavorites
   } = useFavorites();
 
-  const handleView = (document) => {
-    // TODO: Navigate to document view
-    console.log('View document:', document);
+  const handleView = (documentId) => {
+    logger.info('Viewing document from favorites', { documentId });
+    navigate(`/documents/${documentId}`);
   };
 
-  const handleEdit = (document) => {
-    // TODO: Navigate to document edit
-    console.log('Edit document:', document);
+  const handleEdit = (documentId) => {
+    logger.info('Editing document from favorites', { documentId });
+    navigate(`/documents/${documentId}/edit`);
   };
 
-  const handleShare = (document) => {
-    // TODO: Share document
-    console.log('Share document:', document);
+  const handleDelete = (documentId, title) => {
+    if (window.confirm(`Are you sure you want to remove "${title}" from favorites?`)) {
+      logger.info('Removing document from favorites', { documentId });
+      removeFromFavorites(documentId);
+    }
+  };
+
+  const handleToggleFavorite = (documentId) => {
+    logger.info('Toggling favorite status', { documentId });
+    toggleFavorite(documentId);
   };
 
   if (loading) {
@@ -68,14 +78,13 @@ function FavoritesPage() {
               <Grid item xs={12} md={6} lg={4} key={doc.id}>
                 <DocumentCard
                   document={doc}
-                  onView={handleView}
-                  onEdit={handleEdit}
-                  onToggleFavorite={toggleFavorite}
-                  onDelete={removeFromFavorites}
-                  onShare={handleShare}
+                  onView={() => handleView(doc.id)}
+                  onEdit={() => handleEdit(doc.id)}
+                  onToggleFavorite={handleToggleFavorite}
+                  onDelete={() => handleDelete(doc.id, doc.title)}
                   showFavorite={true}
                   showDelete={true}
-                  showShare={true}
+                  showViewCount={true}
                   showCategory={true}
                   layout="grid"
                 />

@@ -3,7 +3,6 @@ import {
   Email as EmailIcon,
   Notifications as NotificationsIcon,
   Person as PersonIcon,
-  Phone as PhoneIcon,
   Security as SecurityIcon
 } from '@mui/icons-material';
 import {
@@ -22,21 +21,34 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import React from 'react';
+import { useSnackbar } from 'notistack';
+import React, { useContext, useEffect, useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { AuthContext } from '../contexts/AuthContext';
+import { useError } from '../hooks/useError';
+import userService from '../services/userService';
+import { logger } from '../utils/logger';
 
 function ProfilePage() {
-  const [profile, setProfile] = React.useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    role: 'Editor',
-    department: 'Content Team',
-    bio: 'Experienced technical writer with a passion for creating clear, comprehensive documentation.',
-    avatar: '',
-    joinDate: '2023-06-15'
+  const { user, updateUserProfile } = useContext(AuthContext);
+  const { handleError } = useError();
+  const { enqueueSnackbar } = useSnackbar();
+
+  const [profile, setProfile] = useState({
+    displayName: '',
+    email: '',
+    role: '',
+    department: '',
+    profileImage: '',
+    createdAt: null
   });
 
-  const [preferences, setPreferences] = React.useState({
+  const [originalProfile, setOriginalProfile] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const [preferences, setPreferences] = useState({
     emailNotifications: true,
     pushNotifications: false,
     darkMode: false,
@@ -44,7 +56,7 @@ function ProfilePage() {
     publicProfile: true
   });
 
-  const [recentActivity] = React.useState([
+  const [recentActivity] = useState([
     {
       type: 'document',
       action: 'edited',
@@ -65,6 +77,49 @@ function ProfilePage() {
     }
   ]);
 
+  /**
+   * Load user profile from API
+   */
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const profileData = await userService.getCurrentUserProfile();
+
+      const profileState = {
+        displayName: profileData.displayName || '',
+        email: profileData.email || '',
+        role: profileData.role || '',
+        department: profileData.department || '',
+        profileImage: profileData.profileImage || '',
+        createdAt: profileData.createdAt
+      };
+
+      setProfile(profileState);
+      setOriginalProfile(profileState);
+      setHasChanges(false);
+
+      logger.info('Profile loaded successfully');
+    } catch (error) {
+      logger.error('Failed to load profile', { error: error.message });
+      handleError(error, 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load profile on component mount
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  // Check for changes when profile updates
+  useEffect(() => {
+    const hasProfileChanges = JSON.stringify(profile) !== JSON.stringify(originalProfile);
+    setHasChanges(hasProfileChanges);
+  }, [profile, originalProfile]);
+
   const handlePreferenceChange = (key) => (event) => {
     setPreferences({
       ...preferences,
@@ -78,6 +133,84 @@ function ProfilePage() {
       [field]: value
     });
   };
+
+  /**
+   * Save profile changes
+   */
+  const handleSaveProfile = async () => {
+    try {
+      setSaving(true);
+
+      // Prepare data for API (only send changed fields)
+      const changes = {};
+      for (const key in profile) {
+        if (profile[key] !== originalProfile[key]) {
+          changes[key] = profile[key];
+        }
+      }
+
+      if (Object.keys(changes).length === 0) {
+        enqueueSnackbar('No changes to save', { variant: 'info' });
+        return;
+      }
+
+
+      // Use AuthContext to update and sync user globally
+      const updatedProfile = await updateUserProfile(changes);
+
+      // Update local state with the new profile
+      const newProfileState = {
+        displayName: updatedProfile.displayName || '',
+        email: updatedProfile.email || '',
+        role: updatedProfile.role || '',
+        department: updatedProfile.department || '',
+        profileImage: updatedProfile.profileImage || '',
+        createdAt: updatedProfile.createdAt
+      };
+      setProfile(newProfileState);
+      setOriginalProfile(newProfileState);
+      setHasChanges(false);
+
+      enqueueSnackbar('Profile updated successfully', { variant: 'success' });
+      logger.info('Profile saved successfully', { changes: Object.keys(changes) });
+
+    } catch (error) {
+      logger.error('Failed to save profile', { error: error.message });
+      handleError(error, 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Cancel profile changes
+   */
+  const handleCancelChanges = () => {
+    setProfile(originalProfile);
+    setHasChanges(false);
+  };
+
+  // Show loading spinner while loading profile
+  if (loading) {
+    return (
+      <LoadingSpinner
+        message="Loading profile..."
+        centered
+        size="large"
+      />
+    );
+  }
+
+  // Show message if no user
+  if (!user) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6" color="error">
+          Please log in to view your profile
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -97,12 +230,13 @@ function ProfilePage() {
                 bgcolor: 'primary.main',
                 fontSize: '3rem'
               }}
+              src={profile.profileImage}
             >
-              {profile.name.split(' ').map(n => n[0]).join('')}
+              {profile.displayName ? profile.displayName.split(' ').map(n => n[0]).join('') : '?'}
             </Avatar>
 
             <Typography variant="h5" gutterBottom>
-              {profile.name}
+              {profile.displayName || 'Unknown User'}
             </Typography>
 
             <Chip
@@ -112,11 +246,11 @@ function ProfilePage() {
             />
 
             <Typography variant="body2" color="text.secondary" paragraph>
-              {profile.department}
+              {profile.department || 'No department set'}
             </Typography>
 
             <Typography variant="body2" color="text.secondary">
-              Member since {new Date(profile.joinDate).toLocaleDateString()}
+              Member since {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Unknown'}
             </Typography>
 
             <Button
@@ -190,9 +324,9 @@ function ProfilePage() {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Full Name"
-                  value={profile.name}
-                  onChange={(e) => handleProfileChange('name', e.target.value)}
+                  label="Display Name"
+                  value={profile.displayName}
+                  onChange={(e) => handleProfileChange('displayName', e.target.value)}
                 />
               </Grid>
 
@@ -201,31 +335,21 @@ function ProfilePage() {
                   fullWidth
                   label="Role"
                   value={profile.role}
-                  onChange={(e) => handleProfileChange('role', e.target.value)}
+                  disabled
+                  helperText="Role can only be changed by an administrator"
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Email"
                   type="email"
                   value={profile.email}
-                  onChange={(e) => handleProfileChange('email', e.target.value)}
+                  disabled
+                  helperText="Email cannot be changed"
                   InputProps={{
                     startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Phone"
-                  value={profile.phone}
-                  onChange={(e) => handleProfileChange('phone', e.target.value)}
-                  InputProps={{
-                    startAdornment: <PhoneIcon sx={{ mr: 1, color: 'text.secondary' }} />
                   }}
                 />
               </Grid>
@@ -236,27 +360,25 @@ function ProfilePage() {
                   label="Department"
                   value={profile.department}
                   onChange={(e) => handleProfileChange('department', e.target.value)}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Bio"
-                  multiline
-                  rows={4}
-                  value={profile.bio}
-                  onChange={(e) => handleProfileChange('bio', e.target.value)}
-                  placeholder="Tell us about yourself..."
+                  placeholder="Enter your department"
                 />
               </Grid>
             </Grid>
 
             <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-              <Button variant="contained" color="primary">
-                Save Changes
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSaveProfile}
+                disabled={!hasChanges || saving}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
               </Button>
-              <Button variant="outlined">
+              <Button
+                variant="outlined"
+                onClick={handleCancelChanges}
+                disabled={!hasChanges || saving}
+              >
                 Cancel
               </Button>
             </Box>

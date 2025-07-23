@@ -107,8 +107,15 @@ function DocumentView() {
     try {
       setSubmittingComment(true);
 
-      // TODO: Implement comment submission
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Placeholder
+      // Create the comment using the API
+      await documentService.createComment(id, {
+        text: commentText.trim()
+      });
+
+      logger.info('Comment submitted successfully', {
+        documentId: id,
+        textLength: commentText.trim().length
+      });
 
       setCommentText('');
       // Refresh document to get updated comments

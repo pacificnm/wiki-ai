@@ -223,7 +223,18 @@ export const getDocumentById = async (req, res, next) => {
       viewCount: document.viewCount,
       createdAt: document.createdAt,
       updatedAt: document.updatedAt,
-      comments: document.commentIds || [],
+      comments: document.commentIds?.map(comment => ({
+        _id: comment._id,
+        text: comment.text,
+        location: comment.location,
+        createdAt: comment.createdAt,
+        userId: {
+          _id: comment.userId?._id,
+          displayName: comment.userId?.displayName,
+          email: comment.userId?.email
+        },
+        author: comment.userId?.displayName || comment.userId?.email || 'Anonymous'
+      })) || [],
       attachments: document.attachmentPaths || [],
       versionHistory: document.versionHistory?.map(version => ({
         id: version._id,

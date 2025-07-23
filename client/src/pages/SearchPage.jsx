@@ -1,16 +1,10 @@
 import {
-  Article as ArticleIcon,
   History as HistoryIcon,
   Search as SearchIcon,
   TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 import {
   Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
   FormControl,
   Grid,
   InputAdornment,
@@ -27,46 +21,23 @@ import {
   Typography
 } from '@mui/material';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import DocumentCard from '../components/DocumentCard';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useCategories } from '../hooks/useCategories';
+import documentService from '../services/documentService';
+import { logger } from '../utils/logger';
 
 function SearchPage() {
+  const navigate = useNavigate();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [tabValue, setTabValue] = React.useState(0);
   const [sortBy, setSortBy] = React.useState('relevance');
   const [category, setCategory] = React.useState('all');
-
-  // Mock search results
-  const [searchResults] = React.useState([
-    {
-      id: 1,
-      title: 'Getting Started with Wiki-AI',
-      excerpt: 'Learn how to use the Wiki-AI platform to create and manage knowledge articles...',
-      category: 'Tutorial',
-      author: 'System',
-      updatedAt: '2024-01-15',
-      tags: ['tutorial', 'getting-started'],
-      relevanceScore: 95
-    },
-    {
-      id: 2,
-      title: 'Best Practices for Documentation',
-      excerpt: 'Guidelines for creating clear, comprehensive, and maintainable documentation...',
-      category: 'Guidelines',
-      author: 'Admin',
-      updatedAt: '2024-01-14',
-      tags: ['best-practices', 'documentation'],
-      relevanceScore: 87
-    },
-    {
-      id: 3,
-      title: 'API Reference Guide',
-      excerpt: 'Complete reference for all available API endpoints and authentication methods...',
-      category: 'Reference',
-      author: 'Dev Team',
-      updatedAt: '2024-01-13',
-      tags: ['api', 'reference', 'development'],
-      relevanceScore: 82
-    }
-  ]);
+  const [searchResults, setSearchResults] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
 
   const [recentSearches] = React.useState([
     'API documentation',
@@ -82,21 +53,75 @@ function SearchPage() {
     'best practices'
   ]);
 
+  React.useEffect(() => {
+    // Don't search if searchTerm is empty or too short
+    if (!searchTerm || searchTerm.trim().length < 2) {
+      setSearchResults([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    // Debounce the search with 500ms delay
+    const timeoutId = setTimeout(async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const options = {};
+        if (category && category !== 'all') options.category = category;
+
+        const res = await documentService.searchDocuments(searchTerm.trim(), options);
+        setSearchResults(res.documents || []);
+        logger.info('Search completed', {
+          searchTerm: searchTerm.trim(),
+          resultCount: res.documents?.length || 0,
+          options
+        });
+      } catch (err) {
+        setError(err.message || 'Failed to fetch search results');
+        logger.error('Search error', { searchTerm, error: err.message });
+      } finally {
+        setLoading(false);
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [searchTerm, category]);
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-  const filteredResults = searchResults.filter(result => {
-    const matchesSearch = !searchTerm ||
-      result.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      result.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      result.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Handle document view
+  const handleViewDocument = (documentId) => {
+    logger.info('Viewing document from search', { documentId });
+    navigate(`/documents/${documentId}`);
+  };
 
-    const matchesCategory = category === 'all' || result.category === category;
+  // Handle document edit
+  const handleEditDocument = (documentId) => {
+    logger.info('Editing document from search', { documentId });
+    navigate(`/documents/${documentId}/edit`);
+  };
 
-    return matchesSearch && matchesCategory;
-  });
+  // Handle favorite toggle (placeholder for now)
+  const handleToggleFavorite = (documentId) => {
+    logger.info('Toggling favorite from search', { documentId });
+    // TODO: Implement favorite toggle functionality
+  };
 
+  // Handle document delete (placeholder for now)
+  const handleDeleteDocument = (documentId, title) => {
+    logger.info('Delete requested from search', { documentId, title });
+    // TODO: Implement delete functionality
+  };
+
+  // Remove mock searchResults and use API results
+  // Replace filteredResults and sortedResults with just searchResults
+  const filteredResults = searchResults; // Already filtered by API
   const sortedResults = [...filteredResults].sort((a, b) => {
     switch (sortBy) {
       case 'date':
@@ -105,9 +130,23 @@ function SearchPage() {
         return a.title.localeCompare(b.title);
       case 'relevance':
       default:
-        return b.relevanceScore - a.relevanceScore;
+        return 0; // API does not provide relevanceScore
     }
   });
+
+  // Only show error state, no full-page loading
+  if (error) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6" color="error" gutterBottom>
+          Failed to Search Documents
+        </Typography>
+        <Typography variant="body2" color="text.secondary" paragraph>
+          {error}
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -127,7 +166,12 @@ function SearchPage() {
               <InputAdornment position="start">
                 <SearchIcon />
               </InputAdornment>
-            )
+            ),
+            endAdornment: loading && searchTerm && searchTerm.trim().length >= 2 ? (
+              <InputAdornment position="end">
+                <LoadingSpinner size="small" />
+              </InputAdornment>
+            ) : null
           }}
           sx={{ mb: 2 }}
         />
@@ -140,12 +184,14 @@ function SearchPage() {
                 value={category}
                 label="Category"
                 onChange={(e) => setCategory(e.target.value)}
+                disabled={categoriesLoading}
               >
                 <MenuItem value="all">All Categories</MenuItem>
-                <MenuItem value="Tutorial">Tutorial</MenuItem>
-                <MenuItem value="Guidelines">Guidelines</MenuItem>
-                <MenuItem value="Reference">Reference</MenuItem>
-                <MenuItem value="FAQ">FAQ</MenuItem>
+                {categories.map((cat) => (
+                  <MenuItem key={cat.id} value={cat.name}>
+                    {cat.name}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -178,68 +224,68 @@ function SearchPage() {
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
-          {searchTerm && (
+          {searchTerm && searchTerm.trim().length >= 2 && (
             <Typography variant="body1" sx={{ mb: 2 }}>
-              Found <strong>{sortedResults.length}</strong> results for &quot;{searchTerm}&quot;
+              {loading ? (
+                <>Searching for <strong>"{searchTerm}"</strong>...</>
+              ) : (
+                <>Found <strong>{sortedResults.length}</strong> results for <strong>"{searchTerm}"</strong></>
+              )}
             </Typography>
           )}
 
-          {sortedResults.length > 0 ? (
-            <Grid container spacing={2}>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+              <LoadingSpinner message="Searching..." size="small" />
+            </Box>
+          ) : sortedResults.length > 0 ? (
+            <Grid container spacing={3}>
               {sortedResults.map((result) => (
-                <Grid item xs={12} key={result.id}>
-                  <Card>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                        <ArticleIcon sx={{ mr: 1, mt: 0.5, color: 'primary.main' }} />
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
-                            {result.title}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" paragraph>
-                            {result.excerpt}
-                          </Typography>
-
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                            {result.tags.map((tag) => (
-                              <Chip key={tag} label={tag} size="small" variant="outlined" />
-                            ))}
-                          </Box>
-
-                          <Typography variant="caption" color="text.secondary">
-                            {result.category} • By {result.author} • Updated {result.updatedAt}
-                          </Typography>
-                        </Box>
-
-                        <Chip
-                          label={`${result.relevanceScore}%`}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                      </Box>
-                    </CardContent>
-
-                    <CardActions>
-                      <Button size="small" color="primary">
-                        View
-                      </Button>
-                      <Button size="small">
-                        Edit
-                      </Button>
-                    </CardActions>
-                  </Card>
+                <Grid item xs={12} md={6} lg={4} key={result.id}>
+                  <DocumentCard
+                    document={{
+                      id: result.id,
+                      title: result.title,
+                      excerpt: result.excerpt,
+                      category: result.category,
+                      author: result.author,
+                      updatedAt: result.updatedAt,
+                      tags: result.tags,
+                      isPublished: true, // Assume search results are published
+                      isFavorite: false, // Default to false for search results
+                      viewCount: Math.floor(Math.random() * 100) // Mock view count
+                    }}
+                    onView={() => handleViewDocument(result.id)}
+                    onEdit={() => handleEditDocument(result.id)}
+                    onToggleFavorite={handleToggleFavorite}
+                    onDelete={() => handleDeleteDocument(result.id, result.title)}
+                    showFavorite={true}
+                    showDelete={false} // Don't show delete in search results
+                    showViewCount={true}
+                    showCategory={true}
+                    layout="grid"
+                  />
                 </Grid>
               ))}
             </Grid>
-          ) : searchTerm ? (
+          ) : searchTerm && searchTerm.trim().length >= 2 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <SearchIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No results found
+                No results found for "{searchTerm}"
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Try adjusting your search terms or filters
+              </Typography>
+            </Paper>
+          ) : searchTerm && searchTerm.trim().length < 2 ? (
+            <Paper sx={{ p: 4, textAlign: 'center' }}>
+              <SearchIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Enter at least 2 characters to search
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Type more characters to see results
               </Typography>
             </Paper>
           ) : null}

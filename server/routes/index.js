@@ -1,8 +1,10 @@
 import express from 'express';
 import activityRoutes from './activityRoutes.js';
 import adminRoutes from './admin/adminRoutes.js';
+import aiRoutes from './aiRoutes.js';
 import authRoutes from './authRoutes.js';
 import categoryRoutes from './categoryRoutes.js';
+import commentRoutes from './commentRoutes.js';
 import documentRoutes from './documentRoutes.js';
 import errorRoutes from './errorRoutes.js';
 import favoriteRoutes from './favoriteRoutes.js';
@@ -59,6 +61,13 @@ router.use('/categories', categoryRoutes);
 router.use('/documents', documentRoutes);
 
 /**
+ * Comment management routes.
+ *
+ * @route /api/comments/*
+ */
+router.use('/comments', commentRoutes);
+
+/**
  * Favorite management routes.
  *
  * @route /api/favorites/*
@@ -78,6 +87,13 @@ router.use('/activities', activityRoutes);
  * @route /api/admin/*
  */
 router.use('/admin', adminRoutes);
+
+/**
+ * AI-powered document generation and improvement routes.
+ *
+ * @route /api/ai/*
+ */
+router.use('/ai', aiRoutes);
 
 /**
  * User routes (when implemented).
