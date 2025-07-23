@@ -6,7 +6,9 @@ const categorySchema = new mongoose.Schema({
   description: { type: String },
   parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
   path: [{ type: String }],
-  depth: { type: Number, default: 0 }
+  depth: { type: Number, default: 0 },
+  icon: { type: String, default: '📁' }, // Category icon (emoji)
+  color: { type: String, default: '#1976d2' } // Category color (hex)
 });
 
 // Add indexes for category queries
@@ -16,7 +18,7 @@ categorySchema.index({ depth: 1 });
 categorySchema.index({ path: 1 });
 
 // Virtual for full path string
-categorySchema.virtual('fullPath').get(function() {
+categorySchema.virtual('fullPath').get(function () {
   return this.path.join('/');
 });
 

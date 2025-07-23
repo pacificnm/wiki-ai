@@ -13,12 +13,22 @@ export const createCategorySchema = z.object({
     .string()
     .max(500, 'Description must be less than 500 characters')
     .optional()
-    .or(z.literal('')),
+    .or(z.literal(''))
+    .or(z.null()),
   parentId: z
     .string()
     .regex(/^[0-9a-fA-F]{24}$/, 'Invalid parent category ID')
     .optional()
     .or(z.literal(''))
+    .or(z.null()),
+  icon: z
+    .string()
+    .min(1, 'Icon is required')
+    .optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Invalid color format (must be hex)')
+    .optional()
 });
 
 /**
@@ -35,13 +45,22 @@ export const updateCategorySchema = z.object({
     .string()
     .max(500, 'Description must be less than 500 characters')
     .optional()
-    .or(z.literal('')),
+    .or(z.literal(''))
+    .or(z.null()),
   parentId: z
     .string()
     .regex(/^[0-9a-fA-F]{24}$/, 'Invalid parent category ID')
     .optional()
     .or(z.literal(''))
-    .or(z.null())
+    .or(z.null()),
+  icon: z
+    .string()
+    .min(1, 'Icon is required')
+    .optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Invalid color format (must be hex)')
+    .optional()
 });
 
 /**

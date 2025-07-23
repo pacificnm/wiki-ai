@@ -91,7 +91,19 @@ export const createCategory = async (req, res, next) => {
       throw error;
     }
 
-    const { name, description, parentId } = validatedData;
+    const { name, description, parentId, icon, color } = validatedData;
+
+    // Set default icon and color if not provided
+    let categoryIcon = icon;
+    let categoryColor = color;
+
+    if (!categoryIcon || !categoryColor) {
+      // Import the config function for defaults
+      const { getDefaultIconAndColor } = await import('../../shared/categoryConfig.js');
+      const defaults = getDefaultIconAndColor(name);
+      categoryIcon = categoryIcon || defaults.icon;
+      categoryColor = categoryColor || defaults.color;
+    }
 
     // Generate slug from name
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -121,7 +133,9 @@ export const createCategory = async (req, res, next) => {
       description,
       parentId: parentId || null,
       path,
-      depth
+      depth,
+      icon: categoryIcon,
+      color: categoryColor
     });
 
     await category.save();
@@ -166,7 +180,7 @@ export const updateCategory = async (req, res, next) => {
       throw error;
     }
 
-    const { name, description, parentId } = validatedData;
+    const { name, description, parentId, icon, color } = validatedData;
 
     const category = await Category.findById(id);
     if (!category) {
@@ -203,6 +217,14 @@ export const updateCategory = async (req, res, next) => {
 
     if (description !== undefined) {
       category.description = description;
+    }
+
+    if (icon !== undefined) {
+      category.icon = icon;
+    }
+
+    if (color !== undefined) {
+      category.color = color;
     }
 
     // Handle parent change

@@ -13,61 +13,7 @@ import {
   LinearProgress,
   Typography
 } from '@mui/material';
-
-/**
- * Generate a color for a category based on its name
- * @param {string} name - Category name
- * @returns {string} Hex color
- */
-const getCategoryColor = (name) => {
-  const colors = [
-    '#1976d2', '#388e3c', '#f57c00', '#7b1fa2',
-    '#d32f2f', '#455a64', '#00796b', '#5d4037',
-    '#616161', '#e91e63', '#9c27b0', '#3f51b5'
-  ];
-
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  return colors[Math.abs(hash) % colors.length];
-};
-
-/**
- * Generate an icon for a category based on its name
- * @param {string} name - Category name
- * @returns {string} Emoji icon
- */
-const getCategoryIcon = (name) => {
-  const iconMap = {
-    tutorial: '📚',
-    guide: '📋',
-    guideline: '📋',
-    reference: '📖',
-    faq: '❓',
-    documentation: '🔧',
-    meeting: '📝',
-    note: '📝',
-    policy: '📄',
-    procedure: '⚙️',
-    help: '❓',
-    support: '🆘',
-    knowledge: '🧠',
-    resource: '📦',
-    template: '📋',
-    example: '💡',
-  };
-
-  const lowerName = name.toLowerCase();
-  for (const [key, icon] of Object.entries(iconMap)) {
-    if (lowerName.includes(key)) {
-      return icon;
-    }
-  }
-
-  return '📁'; // Default folder icon
-};
+import { getDefaultIconAndColor } from '../config/categoryConfig';
 
 /**
  * Format relative time
@@ -117,8 +63,10 @@ const CategoryCard = ({
   showActions = true,
   showProgress = true
 }) => {
-  const color = getCategoryColor(category.name || 'Unknown');
-  const icon = getCategoryIcon(category.name || 'Unknown');
+  // Use category's stored icon and color, or fallback to generated ones
+  const fallback = getDefaultIconAndColor(category.name || 'Unknown');
+  const color = category.color || fallback.color;
+  const icon = category.icon || fallback.icon;
   const documentCount = category.documentCount || 0;
   const maxDocuments = allCategories.length > 0
     ? Math.max(...allCategories.map(c => c.documentCount || 0))

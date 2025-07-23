@@ -4,7 +4,9 @@ import {
 } from '@mui/icons-material';
 import {
   Alert,
+  Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -19,10 +21,10 @@ import {
   Typography
 } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { CATEGORY_COLORS, CATEGORY_ICONS, getDefaultIconAndColor } from '../config/categoryConfig';
 import { useError } from '../hooks/useError';
 import categoryService from '../services/categoryService';
 import { logger } from '../utils/logger';
-import LoadingSpinner from './LoadingSpinner';
 
 /**
  * CategoryDialog component for creating and editing categories
@@ -45,7 +47,9 @@ const CategoryDialog = ({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    parentId: ''
+    parentId: '',
+    icon: '📁',
+    color: '#1976d2'
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -59,13 +63,19 @@ const CategoryDialog = ({
         setFormData({
           name: category.name || '',
           description: category.description || '',
-          parentId: category.parentId?._id || category.parentId || ''
+          parentId: category.parentId?._id || category.parentId || '',
+          icon: category.icon || '📁',
+          color: category.color || '#1976d2'
         });
       } else {
+        // For create mode, set defaults based on name if available
+        const defaults = getDefaultIconAndColor(formData.name || 'New Category');
         setFormData({
           name: '',
           description: '',
-          parentId: ''
+          parentId: '',
+          icon: defaults.icon,
+          color: defaults.color
         });
       }
       setErrors({});
@@ -146,7 +156,9 @@ const CategoryDialog = ({
       const submitData = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        parentId: formData.parentId || null
+        parentId: formData.parentId || null,
+        icon: formData.icon,
+        color: formData.color
       };
 
       if (mode === 'edit' && category) {
@@ -272,6 +284,80 @@ const CategoryDialog = ({
           sx={{ mb: 2 }}
         />
 
+        <FormControl fullWidth error={!!errors.icon} disabled={loading} sx={{ mb: 2 }}>
+          <InputLabel>Icon</InputLabel>
+          <Select
+            name="icon"
+            value={formData.icon}
+            onChange={handleChange}
+            label="Icon"
+            renderValue={(value) => (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <span style={{ fontSize: '1.2em' }}>{value}</span>
+                <span>{CATEGORY_ICONS.find(icon => icon.value === value)?.label.split(' ').slice(1).join(' ') || 'General'}</span>
+              </Box>
+            )}
+          >
+            {CATEGORY_ICONS.map((icon) => (
+              <MenuItem key={icon.value} value={icon.value}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                  <span style={{ fontSize: '1.2em' }}>{icon.value}</span>
+                  <Box>
+                    <Typography variant="body1">{icon.label.split(' ').slice(1).join(' ')}</Typography>
+                    <Typography variant="caption" color="text.secondary">{icon.description}</Typography>
+                  </Box>
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+          {errors.icon && <FormHelperText>{errors.icon}</FormHelperText>}
+        </FormControl>
+
+        <FormControl fullWidth error={!!errors.color} disabled={loading} sx={{ mb: 2 }}>
+          <InputLabel>Color</InputLabel>
+          <Select
+            name="color"
+            value={formData.color}
+            onChange={handleChange}
+            label="Color"
+            renderValue={(value) => (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    backgroundColor: value,
+                    borderRadius: '50%',
+                    border: '1px solid #ccc'
+                  }}
+                />
+                <span>{CATEGORY_COLORS.find(color => color.value === value)?.label || 'Blue'}</span>
+              </Box>
+            )}
+          >
+            {CATEGORY_COLORS.map((color) => (
+              <MenuItem key={color.value} value={color.value}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                  <Box
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      backgroundColor: color.value,
+                      borderRadius: '50%',
+                      border: '1px solid #ccc'
+                    }}
+                  />
+                  <Box>
+                    <Typography variant="body1">{color.label}</Typography>
+                    <Typography variant="caption" color="text.secondary">{color.description}</Typography>
+                  </Box>
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+          {errors.color && <FormHelperText>{errors.color}</FormHelperText>}
+        </FormControl>
+
         <FormControl fullWidth error={!!errors.parentId} disabled={loading}>
           <InputLabel>Parent Category</InputLabel>
           <Select
@@ -305,7 +391,7 @@ const CategoryDialog = ({
         <Button
           onClick={handleSubmit}
           variant="contained"
-          startIcon={loading ? <LoadingSpinner size={16} /> : <SaveIcon />}
+          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
           disabled={loading}
         >
           {loading ? 'Saving...' : (mode === 'edit' ? 'Update' : 'Create')}
