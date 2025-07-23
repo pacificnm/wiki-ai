@@ -27,7 +27,7 @@ export const getAllDocuments = async (req, res, next) => {
     // If user is not admin, only show their own documents or published documents
     if (req.user.role !== 'admin') {
       query.$or = [
-        { userId: req.user.id },
+        { userId: req.user.dbUser._id },
         { isPublished: true }
       ];
     }
@@ -109,7 +109,7 @@ export const getAllDocuments = async (req, res, next) => {
     }));
 
     logger.info('Documents fetched successfully', {
-      userId: req.user.id,
+      userId: req.user.dbUser._id,
       userRole: req.user.role,
       count: documents.length,
       total,
@@ -167,7 +167,7 @@ export const getDocumentById = async (req, res, next) => {
 
     // Check permissions - users can only view their own documents or published documents
     if (req.user.role !== 'admin' &&
-      document.userId._id.toString() !== req.user.id &&
+      document.userId._id.toString() !== req.user.dbUser._id.toString() &&
       !document.isPublished) {
       return res.status(403).json({
         success: false,
@@ -209,7 +209,7 @@ export const getDocumentById = async (req, res, next) => {
 
     logger.info('Document fetched successfully', {
       documentId: id,
-      userId: req.user.id,
+      userId: req.user.dbUser._id,
       viewCount: document.viewCount
     });
 
@@ -252,25 +252,40 @@ export const createDocument = async (req, res, next) => {
     }
 
     // Find or create categories
-    const categoryIds = [];
+    let categoryIds = [];
     if (categories && categories.length > 0) {
-      for (const categoryName of categories) {
-        let category = await Category.findOne({ name: categoryName });
-        if (!category) {
-          category = new Category({
-            name: categoryName,
-            description: `Auto-created category: ${categoryName}`,
-            userId: req.user.id
-          });
-          await category.save();
+      // Check if categories are IDs or names
+      for (const categoryData of categories) {
+        let category;
+
+        // If it's an ObjectId string, find by ID
+        if (typeof categoryData === 'string' && categoryData.match(/^[0-9a-fA-F]{24}$/)) {
+          category = await Category.findById(categoryData);
+        } else {
+          // Otherwise treat as name and find or create
+          const categoryName = typeof categoryData === 'string' ? categoryData : categoryData.name;
+          category = await Category.findOne({ name: categoryName });
+          if (!category) {
+            category = new Category({
+              name: categoryName,
+              slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+              description: `Auto-created category: ${categoryName}`,
+              icon: '📁',
+              color: '#1976d2'
+            });
+            await category.save();
+          }
         }
-        categoryIds.push(category._id);
+
+        if (category) {
+          categoryIds.push(category._id);
+        }
       }
     }
 
     // Create the document
     const document = new Document({
-      userId: req.user.id,
+      userId: req.user.dbUser._id,
       title,
       description,
       tags: Array.isArray(tags) ? tags : (tags ? [tags] : []),
@@ -285,11 +300,9 @@ export const createDocument = async (req, res, next) => {
     if (content) {
       const version = new Version({
         documentId: document._id,
-        userId: req.user.id,
-        content,
-        excerpt: content.substring(0, 200) + (content.length > 200 ? '...' : ''),
-        version: 1,
-        isActive: true
+        createdBy: req.user.dbUser._id,
+        markdown: content,
+        reason: 'Initial version'
       });
 
       await version.save();
@@ -311,8 +324,8 @@ export const createDocument = async (req, res, next) => {
       id: populatedDocument._id,
       title: populatedDocument.title,
       description: populatedDocument.description,
-      content: populatedDocument.currentVersionId?.content || '',
-      excerpt: populatedDocument.currentVersionId?.excerpt || populatedDocument.description || '',
+      content: populatedDocument.currentVersionId?.markdown || '',
+      excerpt: populatedDocument.description || populatedDocument.currentVersionId?.markdown?.substring(0, 200) + (populatedDocument.currentVersionId?.markdown?.length > 200 ? '...' : '') || '',
       category: populatedDocument.categoryIds?.[0]?.name || 'Uncategorized',
       categories: populatedDocument.categoryIds?.map(cat => ({
         id: cat._id,
@@ -334,7 +347,7 @@ export const createDocument = async (req, res, next) => {
 
     logger.info('Document created successfully', {
       documentId: document._id,
-      userId: req.user.id,
+      userId: req.user.dbUser._id,
       title,
       isPublished
     });
@@ -379,7 +392,7 @@ export const updateDocument = async (req, res, next) => {
     }
 
     // Check permissions - users can only edit their own documents
-    if (req.user.role !== 'admin' && document.userId.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && document.userId.toString() !== req.user.dbUser._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -387,20 +400,35 @@ export const updateDocument = async (req, res, next) => {
     }
 
     // Handle categories if provided
-    let { categoryIds } = document;
+    let categoryIds = document.categoryIds;
     if (categories && categories.length > 0) {
       categoryIds = [];
-      for (const categoryName of categories) {
-        let category = await Category.findOne({ name: categoryName });
-        if (!category) {
-          category = new Category({
-            name: categoryName,
-            description: `Auto-created category: ${categoryName}`,
-            userId: req.user.id
-          });
-          await category.save();
+      // Check if categories are IDs or names
+      for (const categoryData of categories) {
+        let category;
+
+        // If it's an ObjectId string, find by ID
+        if (typeof categoryData === 'string' && categoryData.match(/^[0-9a-fA-F]{24}$/)) {
+          category = await Category.findById(categoryData);
+        } else {
+          // Otherwise treat as name and find or create
+          const categoryName = typeof categoryData === 'string' ? categoryData : categoryData.name;
+          category = await Category.findOne({ name: categoryName });
+          if (!category) {
+            category = new Category({
+              name: categoryName,
+              slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+              description: `Auto-created category: ${categoryName}`,
+              icon: '📁',
+              color: '#1976d2'
+            });
+            await category.save();
+          }
         }
-        categoryIds.push(category._id);
+
+        if (category) {
+          categoryIds.push(category._id);
+        }
       }
     }
 
@@ -430,19 +458,12 @@ export const updateDocument = async (req, res, next) => {
     if (content !== undefined) {
       const version = new Version({
         documentId: id,
-        userId: req.user.id,
-        content,
-        excerpt: content.substring(0, 200) + (content.length > 200 ? '...' : ''),
-        version: (document.versionHistory?.length || 0) + 1,
-        isActive: true
+        createdBy: req.user.dbUser._id,
+        markdown: content,
+        reason: 'Content update'
       });
 
       await version.save();
-
-      // Deactivate old version
-      if (document.currentVersionId) {
-        await Version.findByIdAndUpdate(document.currentVersionId, { isActive: false });
-      }
 
       // Update document with new current version
       updatedDocument.currentVersionId = version._id;
@@ -458,8 +479,8 @@ export const updateDocument = async (req, res, next) => {
       id: updatedDocument._id,
       title: updatedDocument.title,
       description: updatedDocument.description,
-      content: updatedDocument.currentVersionId?.content || '',
-      excerpt: updatedDocument.currentVersionId?.excerpt || updatedDocument.description || '',
+      content: updatedDocument.currentVersionId?.markdown || '',
+      excerpt: updatedDocument.description || updatedDocument.currentVersionId?.markdown?.substring(0, 200) + (updatedDocument.currentVersionId?.markdown?.length > 200 ? '...' : '') || '',
       category: updatedDocument.categoryIds?.[0]?.name || 'Uncategorized',
       categories: updatedDocument.categoryIds?.map(cat => ({
         id: cat._id,
@@ -481,7 +502,7 @@ export const updateDocument = async (req, res, next) => {
 
     logger.info('Document updated successfully', {
       documentId: id,
-      userId: req.user.id,
+      userId: req.user.dbUser._id,
       updatedFields: Object.keys(updateFields)
     });
 
@@ -518,7 +539,7 @@ export const deleteDocument = async (req, res, next) => {
     }
 
     // Check permissions - users can only delete their own documents
-    if (req.user.role !== 'admin' && document.userId.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && document.userId.toString() !== req.user.dbUser._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -535,7 +556,7 @@ export const deleteDocument = async (req, res, next) => {
 
     logger.info('Document deleted successfully', {
       documentId: id,
-      userId: req.user.id,
+      userId: req.user.dbUser._id,
       title: document.title
     });
 
@@ -560,7 +581,7 @@ export const deleteDocument = async (req, res, next) => {
  */
 export const getDocumentStats = async (req, res, next) => {
   try {
-    const userId = req.user.role === 'admin' ? null : req.user.id;
+    const userId = req.user.role === 'admin' ? null : req.user.dbUser._id;
     const baseQuery = userId ? { userId } : {};
 
     const [
@@ -598,7 +619,7 @@ export const getDocumentStats = async (req, res, next) => {
     };
 
     logger.info('Document stats fetched successfully', {
-      userId: req.user.id,
+      userId: req.user.dbUser._id,
       userRole: req.user.role,
       stats
     });
