@@ -11,6 +11,8 @@ import { initializeFirebase } from './config/firebase.js';
 import { AppError, errorHandler } from './middleware/error.js';
 import { logger, morganStream } from './middleware/logger.js';
 import routes from './routes/index.js';
+// Import all models to register them with Mongoose
+import './models/index.js';
 
 // 3. Init and config
 dotenv.config();

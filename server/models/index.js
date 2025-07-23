@@ -1,12 +1,24 @@
+// Import all models to register them with Mongoose
+// Order matters for models with circular references
 import Category from './Category.js';
 import Comment from './Comment.js';
 import Document from './Document.js';
 import User from './User.js';
 import Version from './Version.js';
 
+// Export all models
 export {
+  Category, Comment,
+  Document, User, Version
+};
+
+// Re-export default models for easier importing
+export default {
+  User,
   Category,
-  Comment, Document, User, Version
+  Version,
+  Comment,
+  Document
 };
 
 // You can add other models as you create them:
