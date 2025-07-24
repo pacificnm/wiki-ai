@@ -41,11 +41,21 @@ router.get('/health', (req, res) => {
 router.use('/auth', authRoutes);
 
 /**
- * Error logging and management routes.
+ * Error handling and logging routes.
  *
- * @route /api/errors/*
+ * @route /api/error/*
  */
-router.use('/errors', errorRoutes);
+router.use('/error', errorRoutes);
+
+/**
+ * Client-side logging endpoint.
+ *
+ * @route POST /api/logs
+ */
+router.post('/logs', (req, res) => {
+  // Just acknowledge receipt - client logging is optional
+  res.status(200).json({ success: true, message: 'Log received' });
+});
 
 /**
  * Category management routes.

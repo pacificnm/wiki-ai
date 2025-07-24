@@ -1,10 +1,40 @@
 const path = require('path');
 const { app, BrowserWindow, Menu, shell } = require('electron');
+const express = require('express');
+const http = require('http');
 
 const isDev = process.env.ELECTRON_IS_DEV === 'true';
 
 // Keep a global reference of the window object
 let mainWindow;
+let localServer;
+
+function createLocalServer() {
+  return new Promise((resolve, reject) => {
+    const expressApp = express();
+    const buildPath = path.join(__dirname, 'build');
+    
+    // Serve static files from build directory
+    expressApp.use(express.static(buildPath));
+    
+    // Handle all routes by serving index.html (for SPA routing)
+    expressApp.get('*', (req, res) => {
+      res.sendFile(path.join(buildPath, 'index.html'));
+    });
+    
+    // Start server on available port
+    localServer = http.createServer(expressApp);
+    localServer.listen(0, 'localhost', (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        const port = localServer.address().port;
+        console.log(`Local server running on http://localhost:${port}`);
+        resolve(`http://localhost:${port}`);
+      }
+    });
+  });
+}
 
 function createWindow() {
   // Create the browser window
@@ -33,12 +63,20 @@ function createWindow() {
     // Open DevTools in development
     mainWindow.webContents.openDevTools();
   } else {
-    // Production mode - load built files
-    const indexPath = path.join(__dirname, 'build', 'index.html');
-    console.log('Loading in production mode from:', indexPath);
-    mainWindow.loadFile(indexPath);
-    // Open DevTools to debug blank screen
-    mainWindow.webContents.openDevTools();
+    // Production mode - start local server and load from there
+    createLocalServer()
+      .then((serverUrl) => {
+        console.log('Loading in production mode from:', serverUrl);
+        mainWindow.loadURL(serverUrl);
+        // Open DevTools to debug
+        mainWindow.webContents.openDevTools();
+      })
+      .catch((err) => {
+        console.error('Failed to start local server:', err);
+        // Fallback to file loading if server fails
+        const indexPath = path.join(__dirname, 'build', 'index.html');
+        mainWindow.loadFile(indexPath);
+      });
   }
 
   // Show window when ready to prevent visual flash
@@ -83,15 +121,17 @@ function createWindow() {
   mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
 
-    // Allow localhost (dev server) and file:// (production build)
-    if (parsedUrl.origin === 'http://localhost:3000' || parsedUrl.origin === 'file://') {
+    // Allow localhost (dev server, local production server) and file:// (fallback)
+    if (parsedUrl.origin === 'http://localhost:3000' || 
+        parsedUrl.hostname === 'localhost' || 
+        parsedUrl.origin === 'file://') {
       return; // Allow navigation
     }
 
     // Allow Firebase Auth domains
     if (parsedUrl.hostname === 'accounts.google.com' ||
-      parsedUrl.hostname.includes('firebaseapp.com') ||
-      parsedUrl.hostname.includes('googleapis.com')) {
+        parsedUrl.hostname.includes('firebaseapp.com') ||
+        parsedUrl.hostname.includes('googleapis.com')) {
       return; // Allow navigation
     }
 
@@ -307,6 +347,11 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  // Close local server if running
+  if (localServer) {
+    localServer.close();
+  }
+  
   if (process.platform !== 'darwin') {
     app.quit();
   }
