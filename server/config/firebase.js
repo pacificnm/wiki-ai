@@ -36,11 +36,16 @@ export async function initializeFirebase() {
     }
 
     // Initialize Firebase Admin SDK
+    // Clean the private key by removing surrounding quotes and fixing newlines
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY
+      .replace(/^["']|["']$/g, '') // Remove surrounding quotes
+      .replace(/\\n/g, '\n'); // Convert \\n to actual newlines
+
     const firebaseConfig = {
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+        privateKey: privateKey
       }),
       databaseURL: process.env.FIREBASE_DATABASE_URL,
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET
