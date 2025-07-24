@@ -1,7 +1,7 @@
+const http = require('http');
 const path = require('path');
 const { app, BrowserWindow, Menu, shell } = require('electron');
 const express = require('express');
-const http = require('http');
 
 const isDev = process.env.ELECTRON_IS_DEV === 'true';
 
@@ -13,15 +13,15 @@ function createLocalServer() {
   return new Promise((resolve, reject) => {
     const expressApp = express();
     const buildPath = path.join(__dirname, 'build');
-    
+
     // Serve static files from build directory
     expressApp.use(express.static(buildPath));
-    
+
     // Handle all routes by serving index.html (for SPA routing)
     expressApp.get('*', (req, res) => {
       res.sendFile(path.join(buildPath, 'index.html'));
     });
-    
+
     // Start server on available port
     localServer = http.createServer(expressApp);
     localServer.listen(0, 'localhost', (err) => {
@@ -122,16 +122,16 @@ function createWindow() {
     const parsedUrl = new URL(navigationUrl);
 
     // Allow localhost (dev server, local production server) and file:// (fallback)
-    if (parsedUrl.origin === 'http://localhost:3000' || 
-        parsedUrl.hostname === 'localhost' || 
-        parsedUrl.origin === 'file://') {
+    if (parsedUrl.origin === 'http://localhost:3000' ||
+      parsedUrl.hostname === 'localhost' ||
+      parsedUrl.origin === 'file://') {
       return; // Allow navigation
     }
 
     // Allow Firebase Auth domains
     if (parsedUrl.hostname === 'accounts.google.com' ||
-        parsedUrl.hostname.includes('firebaseapp.com') ||
-        parsedUrl.hostname.includes('googleapis.com')) {
+      parsedUrl.hostname.includes('firebaseapp.com') ||
+      parsedUrl.hostname.includes('googleapis.com')) {
       return; // Allow navigation
     }
 
@@ -351,7 +351,7 @@ app.on('window-all-closed', () => {
   if (localServer) {
     localServer.close();
   }
-  
+
   if (process.platform !== 'darwin') {
     app.quit();
   }

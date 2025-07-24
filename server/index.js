@@ -65,7 +65,9 @@ async function startServer() {
       // Also allow Codespaces for development testing
       allowedOrigins.push(/^https:\/\/.*\.app\.github\.dev$/);
 
-      // Allow localhost for desktop app development
+      // Allow localhost for desktop app development (any port)
+      allowedOrigins.push(/^http:\/\/localhost:\d+$/);
+      allowedOrigins.push(/^http:\/\/127\.0\.0\.1:\d+$/);
       allowedOrigins.push('http://localhost:3000');
       allowedOrigins.push('http://127.0.0.1:3000');
     } else {
