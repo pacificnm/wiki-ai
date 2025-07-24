@@ -33,12 +33,15 @@ const __dirname = path.dirname(__filename);
  */
 async function startServer() {
   try {
-    // 4. App middleware
-    app.use(helmet());
+    // 4. App middleware with Firebase Auth popup support
+    app.use(helmet({
+      crossOriginOpenerPolicy: false, // Allow Firebase Auth popups
+      crossOriginResourcePolicy: { policy: 'cross-origin' } // Allow cross-origin resources for Firebase
+    }));
 
     // Configure CORS for different environments
     const allowedOrigins = [];
-    
+
     if (process.env.NODE_ENV === 'production') {
       // Production origins
       if (process.env.CLIENT_URL) {
@@ -46,7 +49,7 @@ async function startServer() {
       }
       allowedOrigins.push(/^https:\/\/.*\.railway\.app$/);
       allowedOrigins.push(/^https:\/\/.*\.up\.railway\.app$/);
-      
+
       // Also allow Codespaces for development testing
       allowedOrigins.push(/^https:\/\/.*\.app\.github\.dev$/);
     } else {

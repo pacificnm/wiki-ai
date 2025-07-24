@@ -1,7 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install"
-watchPatterns = ["server/**/*.js", "**/*.json"]
+buildCommand = "npm install --omit=dev"
 
 [deploy]
 startCommand = "npm run server"
