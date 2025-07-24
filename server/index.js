@@ -37,18 +37,27 @@ async function startServer() {
     app.use(helmet());
 
     // Configure CORS for different environments
+    const allowedOrigins = [];
+    
+    if (process.env.NODE_ENV === 'production') {
+      // Production origins
+      if (process.env.CLIENT_URL) {
+        allowedOrigins.push(process.env.CLIENT_URL);
+      }
+      allowedOrigins.push(/^https:\/\/.*\.railway\.app$/);
+      allowedOrigins.push(/^https:\/\/.*\.up\.railway\.app$/);
+      
+      // Also allow Codespaces for development testing
+      allowedOrigins.push(/^https:\/\/.*\.app\.github\.dev$/);
+    } else {
+      // Development origins
+      allowedOrigins.push('http://localhost:3000');
+      allowedOrigins.push('https://curly-train-7jgg75w5w2rr57-3000.app.github.dev');
+      allowedOrigins.push(/^https:\/\/.*\.app\.github\.dev$/);
+    }
+
     const corsOptions = {
-      origin: process.env.NODE_ENV === 'production'
-        ? [
-          process.env.CLIENT_URL,
-          /^https:\/\/.*\.railway\.app$/,
-          /^https:\/\/.*\.up\.railway\.app$/
-        ]
-        : [
-          'http://localhost:3000',
-          'https://curly-train-7jgg75w5w2rr57-3000.app.github.dev',
-          /^https:\/\/.*\.app\.github\.dev$/
-        ],
+      origin: allowedOrigins,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
