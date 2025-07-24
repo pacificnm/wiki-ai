@@ -64,6 +64,10 @@ async function startServer() {
 
       // Also allow Codespaces for development testing
       allowedOrigins.push(/^https:\/\/.*\.app\.github\.dev$/);
+      
+      // Allow localhost for desktop app development
+      allowedOrigins.push('http://localhost:3000');
+      allowedOrigins.push('http://127.0.0.1:3000');
     } else {
       // Development origins - use CLIENT_URL from env or fallback to localhost
       const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
