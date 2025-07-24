@@ -51,20 +51,53 @@ function createWindow() {
     mainWindow = null;
   });
 
-  // Handle external links
+  // Handle external links and popups
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    const parsedUrl = new URL(url);
+    
+    // Allow Firebase Auth popups
+    if (parsedUrl.hostname === 'accounts.google.com' || 
+        parsedUrl.hostname === 'wiki-ai-production.firebaseapp.com' ||
+        parsedUrl.hostname.includes('firebaseapp.com')) {
+      console.log('Allowing Firebase Auth popup:', url);
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 500,
+          height: 600,
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            webSecurity: true
+          }
+        }
+      };
+    }
+    
+    // Open other external links in system browser
     shell.openExternal(url);
     return { action: 'deny' };
   });
 
-  // Prevent navigation to external websites
+  // Prevent navigation to external websites (except Firebase Auth)
   mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
 
-    if (parsedUrl.origin !== 'http://localhost:3000' && parsedUrl.origin !== 'file://') {
-      event.preventDefault();
-      shell.openExternal(navigationUrl);
+    // Allow localhost (dev server) and file:// (production build)
+    if (parsedUrl.origin === 'http://localhost:3000' || parsedUrl.origin === 'file://') {
+      return; // Allow navigation
     }
+    
+    // Allow Firebase Auth domains
+    if (parsedUrl.hostname === 'accounts.google.com' || 
+        parsedUrl.hostname.includes('firebaseapp.com') ||
+        parsedUrl.hostname.includes('googleapis.com')) {
+      return; // Allow navigation
+    }
+
+    // Block all other external navigation
+    event.preventDefault();
+    shell.openExternal(navigationUrl);
   });
 }
 
