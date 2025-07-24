@@ -1,11 +1,12 @@
 import { logger } from '../utils/logger.js';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
 /**
  * Category service for managing category operations
  */
 class CategoryService {
+  constructor() {
+    this.baseURL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+  }
   /**
    * Get authorization headers with Firebase token
    * @private
@@ -31,13 +32,14 @@ class CategoryService {
     }
   }
 
+  
   /**
    * Get all categories
    * @returns {Promise<Array>} Array of categories
    */
   async getAllCategories() {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories`, {
+      const response = await fetch(`${this.baseURL}/api/categories`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +66,7 @@ class CategoryService {
    */
   async getCategoryById(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      const response = await fetch(`${this.baseURL}/api/categories/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +95,7 @@ class CategoryService {
     try {
       const headers = await this._getAuthHeaders();
 
-      const response = await fetch(`${API_BASE_URL}/categories`, {
+      const response = await fetch(`${this.baseURL}/api/categories`, {
         method: 'POST',
         headers,
         body: JSON.stringify(categoryData),
@@ -122,7 +124,7 @@ class CategoryService {
     try {
       const headers = await this._getAuthHeaders();
 
-      const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      const response = await fetch(`${this.baseURL}/api/categories/${id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(categoryData),
@@ -148,7 +150,7 @@ class CategoryService {
    */
   async deleteCategory(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      const response = await fetch(`${this.baseURL}/api/categories/${id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -173,7 +175,7 @@ class CategoryService {
    */
   async getCategoryStats() {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories/stats`, {
+      const response = await fetch(`${this.baseURL}/api/categories/stats`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

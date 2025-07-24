@@ -1,19 +1,24 @@
 import { Google as GoogleIcon, Category as LogoIcon } from '@mui/icons-material';
 import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  TextField,
-  Button,
-  Typography,
-  Alert,
   CircularProgress,
   Divider,
-  Link
+  Link,
+  TextField,
+  Typography
 } from '@mui/material';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword } from 'firebase/auth';
-import React, { useState, useContext } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup
+} from 'firebase/auth';
+import { useContext, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import { AuthContext } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
@@ -32,7 +37,7 @@ const LoginPage = () => {
   const from = location.state?.from?.pathname || '/dashboard';
 
   // Redirect if already logged in
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       navigate(from, { replace: true });
     }
@@ -67,12 +72,30 @@ const LoginPage = () => {
 
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      logger.info('User signed in with Google');
-      navigate(from, { replace: true });
+
+      // Add custom parameters to help with popup behavior
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+
+      const result = await signInWithPopup(auth, provider);
+
+      if (result.user) {
+        logger.info('User signed in with Google');
+        navigate(from, { replace: true });
+      }
     } catch (err) {
-      logger.error('Google auth error', { error: err.message });
-      setError(err.message);
+      // Filter out popup-related warnings that don't affect functionality
+      if (err.code === 'auth/popup-closed-by-user') {
+        logger.info('Google sign-in popup was closed by user');
+        setError('Sign-in was cancelled. Please try again.');
+      } else if (err.code === 'auth/popup-blocked') {
+        logger.warn('Google sign-in popup was blocked');
+        setError('Popup was blocked. Please allow popups and try again.');
+      } else {
+        logger.error('Google auth error', { error: err.message, code: err.code });
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }

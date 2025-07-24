@@ -1,11 +1,11 @@
 // 1. Core and third-party imports
-import path from 'path';
-import { fileURLToPath } from 'url';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 // 2. Custom imports
 import { connectToDatabase, initializeDatabase } from './config/database.js';
 import { initializeFirebase } from './config/firebase.js';
@@ -34,10 +34,22 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   try {
     // 4. App middleware with Firebase Auth popup support
-    app.use(helmet({
-      crossOriginOpenerPolicy: false, // Allow Firebase Auth popups
-      crossOriginResourcePolicy: { policy: 'cross-origin' } // Allow cross-origin resources for Firebase
-    }));
+    if (process.env.NODE_ENV === 'production') {
+      // More restrictive headers for production
+      app.use(helmet({
+        crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+        crossOriginEmbedderPolicy: false
+      }));
+    } else {
+      // More permissive headers for development to allow Firebase Auth
+      app.use(helmet({
+        crossOriginOpenerPolicy: false,
+        crossOriginResourcePolicy: false,
+        crossOriginEmbedderPolicy: false,
+        contentSecurityPolicy: false // Disable CSP in development for Firebase Auth
+      }));
+    }
 
     // Configure CORS for different environments
     const allowedOrigins = [];
@@ -53,18 +65,59 @@ async function startServer() {
       // Also allow Codespaces for development testing
       allowedOrigins.push(/^https:\/\/.*\.app\.github\.dev$/);
     } else {
-      // Development origins
+      // Development origins - use CLIENT_URL from env or fallback to localhost
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      allowedOrigins.push(clientUrl);
+
+      // Also add localhost variations for development
       allowedOrigins.push('http://localhost:3000');
-      allowedOrigins.push('https://curly-train-7jgg75w5w2rr57-3000.app.github.dev');
+      allowedOrigins.push('http://localhost:5000');
+
+      // Allow all GitHub Codespaces URLs
       allowedOrigins.push(/^https:\/\/.*\.app\.github\.dev$/);
     }
 
+    // Log allowed origins for debugging
+    logger.info('CORS allowed origins:', {
+      origins: allowedOrigins.map(o => o.toString()),
+      clientUrl: process.env.CLIENT_URL,
+      nodeEnv: process.env.NODE_ENV
+    });
+
     const corsOptions = {
-      origin: allowedOrigins,
+      origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        // Check if the origin is allowed
+        const isAllowed = allowedOrigins.some(allowedOrigin => {
+          if (typeof allowedOrigin === 'string') {
+            return allowedOrigin === origin;
+          } else if (allowedOrigin instanceof RegExp) {
+            return allowedOrigin.test(origin);
+          }
+          return false;
+        });
+
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          logger.warn(`CORS blocked origin: ${origin}`, {
+            origin,
+            allowedOrigins: allowedOrigins.map(o => o.toString())
+          });
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      optionsSuccessStatus: 200
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+      exposedHeaders: ['Authorization'],
+      optionsSuccessStatus: 200,
+      preflightContinue: false
     };
 
     app.use(cors(corsOptions));
@@ -91,6 +144,11 @@ async function startServer() {
       app.get('/', (req, res) => {
         logger.info('Health check requested');
         res.status(200).json({ status: 'ok', message: 'Server running' });
+      });
+
+      // Handle favicon.ico requests to prevent 404 errors
+      app.get('/favicon.ico', (req, res) => {
+        res.status(204).end(); // No content response
       });
 
       // 9. 404 handler for non-API routes in development

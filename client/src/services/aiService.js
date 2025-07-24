@@ -54,6 +54,8 @@ class AIService {
         })
       });
 
+
+      
       if (!response.ok) {
         throw new Error(`AI generation failed: ${response.status} ${response.statusText}`);
       }
