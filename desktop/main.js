@@ -28,12 +28,17 @@ function createWindow() {
   // Load the app
   if (isDev) {
     // Development mode - connect to development server
+    console.log('Loading in development mode from http://localhost:3000');
     mainWindow.loadURL('http://localhost:3000');
     // Open DevTools in development
     mainWindow.webContents.openDevTools();
   } else {
     // Production mode - load built files
-    mainWindow.loadFile(path.join(__dirname, 'build', 'index.html'));
+    const indexPath = path.join(__dirname, 'build', 'index.html');
+    console.log('Loading in production mode from:', indexPath);
+    mainWindow.loadFile(indexPath);
+    // Open DevTools to debug blank screen
+    mainWindow.webContents.openDevTools();
   }
 
   // Show window when ready to prevent visual flash
