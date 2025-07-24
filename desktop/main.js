@@ -54,11 +54,11 @@ function createWindow() {
   // Handle external links and popups
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     const parsedUrl = new URL(url);
-    
+
     // Allow Firebase Auth popups
-    if (parsedUrl.hostname === 'accounts.google.com' || 
-        parsedUrl.hostname === 'wiki-ai-production.firebaseapp.com' ||
-        parsedUrl.hostname.includes('firebaseapp.com')) {
+    if (parsedUrl.hostname === 'accounts.google.com' ||
+      parsedUrl.hostname === 'wiki-ai-production.firebaseapp.com' ||
+      parsedUrl.hostname.includes('firebaseapp.com')) {
       console.log('Allowing Firebase Auth popup:', url);
       return {
         action: 'allow',
@@ -73,7 +73,7 @@ function createWindow() {
         }
       };
     }
-    
+
     // Open other external links in system browser
     shell.openExternal(url);
     return { action: 'deny' };
@@ -87,11 +87,11 @@ function createWindow() {
     if (parsedUrl.origin === 'http://localhost:3000' || parsedUrl.origin === 'file://') {
       return; // Allow navigation
     }
-    
+
     // Allow Firebase Auth domains
-    if (parsedUrl.hostname === 'accounts.google.com' || 
-        parsedUrl.hostname.includes('firebaseapp.com') ||
-        parsedUrl.hostname.includes('googleapis.com')) {
+    if (parsedUrl.hostname === 'accounts.google.com' ||
+      parsedUrl.hostname.includes('firebaseapp.com') ||
+      parsedUrl.hostname.includes('googleapis.com')) {
       return; // Allow navigation
     }
 
