@@ -1,0 +1,8 @@
+# Placeholder for app icon
+# You should replace this with a proper icon file (icon.png or icon.icns)
+# 
+# For macOS app icons, you need:
+# - icon.png (at least 512x512 pixels)
+# - icon.icns (generated from PNG using tools like Image2icon or iconutil)
+#
+# The icon should be placed in the assets/ directory

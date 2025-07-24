@@ -1,0 +1,80 @@
+{
+  "name": "wiki-ai-desktop",
+  "version": "1.0.0",
+  "description": "Wiki AI Desktop Application for macOS",
+  "main": "main.js",
+  "homepage": "./",
+  "scripts": {
+    "electron": "electron .",
+    "electron-dev": "ELECTRON_IS_DEV=true electron .",
+    "build-client": "cd ../client && npm run build",
+    "copy-build": "rm -rf build && cp -r ../client/build .",
+    "prepare": "npm run build-client && npm run copy-build",
+    "start": "npm run prepare && npm run electron",
+    "dev": "npm run build-client && npm run copy-build && npm run electron-dev",
+    "pack": "electron-builder --dir",
+    "dist": "npm run prepare && electron-builder",
+    "dist-mac": "npm run prepare && electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.wikiai.desktop",
+    "productName": "Wiki AI",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.icns"
+    },
+    "dmg": {
+      "title": "Wiki AI Installer",
+      "background": "assets/dmg-background.png",
+      "window": {
+        "width": 540,
+        "height": 380
+      },
+      "contents": [
+        {
+          "x": 140,
+          "y": 200,
+          "type": "file"
+        },
+        {
+          "x": 400,
+          "y": 200,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  }
+}
