@@ -8,6 +8,12 @@ import { useError } from './useError';
 /**
  * Custom hook for managing document data and operations
  * @param {Object} options - Hook options
+ * @param {boolean} options.autoFetch - Whether to auto-fetch documents on mount
+ * @param {string} options.initialSearch - Initial search term
+ * @param {string} options.initialCategory - Initial category filter
+ * @param {number} options.limit - Number of documents per page
+ * @param {boolean} options.isPublished - Filter for published documents only
+ * @param {boolean} options.userOwned - Filter for user-owned documents only
  * @returns {Object} Document state and operations
  */
 export function useDocuments(options = {}) {
@@ -15,7 +21,9 @@ export function useDocuments(options = {}) {
     autoFetch = true,
     initialSearch = '',
     initialCategory = '',
-    limit = 20
+    limit = 20,
+    isPublished = false,
+    userOwned = false
   } = options;
 
   const [documents, setDocuments] = useState([]);
@@ -100,8 +108,20 @@ export function useDocuments(options = {}) {
     const {
       isLoadMore = false,
       resetData = false,
-      silent = false
+      silent = false,
+      isPublished: overrideIsPublished,
+      userOwned: overrideUserOwned
     } = options;
+
+    // Use override values if provided, otherwise use hook defaults
+    const finalIsPublished = overrideIsPublished !== undefined ? overrideIsPublished : isPublished;
+    const finalUserOwned = overrideUserOwned !== undefined ? overrideUserOwned : userOwned;
+
+    logger.info('Fetching documents with options:', {
+      ...options,
+      isPublished: finalIsPublished,
+      userOwned: finalUserOwned
+    });
 
     if (!silent) {
       setLoading(true);
@@ -121,7 +141,9 @@ export function useDocuments(options = {}) {
         search: searchTerm,
         category: category || undefined,
         limit,
-        skip: currentPage * limit
+        skip: currentPage * limit,
+        isPublished: finalIsPublished,
+        userOwned: finalUserOwned
       });
 
       logger.debug('Raw API response', { response });
@@ -155,7 +177,7 @@ export function useDocuments(options = {}) {
     } finally {
       setLoading(false);
     }
-  }, [clearError, page, searchTerm, category, limit, mergeDocumentsWithFavorites, handleError]);
+  }, [clearError, page, searchTerm, category, limit, mergeDocumentsWithFavorites, handleError, isPublished, userOwned]);
 
   /**
    * Load more documents (pagination)
@@ -176,7 +198,9 @@ export function useDocuments(options = {}) {
         search: searchTerm,
         category: category || undefined,
         limit,
-        skip: nextPage * limit
+        skip: nextPage * limit,
+        isPublished,
+        userOwned
       });
 
       logger.debug('Load more API response', { response });
@@ -203,7 +227,7 @@ export function useDocuments(options = {}) {
     } finally {
       setLoading(false);
     }
-  }, [hasMore, loading, page, searchTerm, category, limit, mergeDocumentsWithFavorites, handleError]);
+  }, [hasMore, loading, page, searchTerm, category, limit, mergeDocumentsWithFavorites, handleError, isPublished, userOwned]);
 
   /**
    * Refresh documents (reset and fetch)

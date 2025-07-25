@@ -38,6 +38,8 @@ function DocumentsPage() {
     updateDocumentFavoriteStatus
   } = useDocuments({
     autoFetch: true,
+    isPublished: true,
+    userOwned: true,
     limit: 24 // Show 24 documents per page (8 per row on large screens)
   });
 

@@ -41,19 +41,22 @@ class DocumentService {
    * @param {string} options.author - Author filter
    * @param {number} options.limit - Limit number of results
    * @param {number} options.skip - Skip number of results
+   * @param {boolean} options.isPublished - Filter for published documents only
+   * @param {boolean} options.userOwned - Filter for user-owned documents only
    * @returns {Promise<Object>} Documents data
    */
   async getAllDocuments(options = {}) {
     try {
       const headers = await this._getAuthHeaders();
-
+      logger.info('Fetching documents with options:', options);
       // Build query parameters
       const queryParams = new URLSearchParams();
       if (options.search) queryParams.append('search', options.search);
       if (options.category) queryParams.append('category', options.category);
-      if (options.author) queryParams.append('author', options.author);
       if (options.limit) queryParams.append('limit', options.limit.toString());
       if (options.skip) queryParams.append('skip', options.skip.toString());
+      if (options.isPublished) queryParams.append('isPublished', options.isPublished.toString());
+      if (options.userOwned) queryParams.append('userOwned', options.userOwned.toString());
 
       const url = `${this.baseURL}/api/documents${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 

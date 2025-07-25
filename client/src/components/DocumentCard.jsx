@@ -148,27 +148,36 @@ const DocumentCard = ({
           )}
         </CardContent>
 
-        <CardActions>
-          <Button size="small" color="primary" onClick={handleView}>
-            View
-          </Button>
-          <Button size="small" onClick={handleEdit}>
-            Edit
-          </Button>
-          {showDelete && (
-            <IconButton
-              size="small"
-              onClick={handleDelete}
-              color="error"
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          )}
-          {showShare && (
-            <IconButton size="small" onClick={handleShare}>
-              <ShareIcon fontSize="small" />
-            </IconButton>
-          )}
+        <CardActions sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button size="small" color="primary" onClick={handleView}>
+              View
+            </Button>
+            <Button size="small" onClick={handleEdit}>
+              Edit
+            </Button>
+            {showDelete && (
+              <IconButton
+                size="small"
+                onClick={handleDelete}
+                color="error"
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            )}
+            {showShare && (
+              <IconButton size="small" onClick={handleShare}>
+                <ShareIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
+
+          <Chip
+            label={document.isPublished ? 'Published' : 'Draft'}
+            size="small"
+            color={document.isPublished ? 'success' : 'warning'}
+            variant="filled"
+          />
         </CardActions>
       </Card>
     );
@@ -213,27 +222,36 @@ const DocumentCard = ({
         </Box>
       </CardContent>
 
-      <CardActions>
-        <Button size="small" startIcon={<ViewIcon />} onClick={handleView}>
-          View
-        </Button>
-        <Button size="small" startIcon={<EditIcon />} onClick={handleEdit}>
-          Edit
-        </Button>
-        {showDelete && (
-          <IconButton
-            size="small"
-            onClick={handleDelete}
-            color="error"
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        )}
-        {showShare && (
-          <IconButton size="small" onClick={handleShare}>
-            <ShareIcon fontSize="small" />
-          </IconButton>
-        )}
+      <CardActions sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button size="small" startIcon={<ViewIcon />} onClick={handleView}>
+            View
+          </Button>
+          <Button size="small" startIcon={<EditIcon />} onClick={handleEdit}>
+            Edit
+          </Button>
+          {showDelete && (
+            <IconButton
+              size="small"
+              onClick={handleDelete}
+              color="error"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          )}
+          {showShare && (
+            <IconButton size="small" onClick={handleShare}>
+              <ShareIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+
+        <Chip
+          label={document.isPublished ? 'Published' : 'Draft'}
+          size="small"
+          color={document.isPublished ? 'success' : 'warning'}
+          variant="filled"
+        />
       </CardActions>
     </Card>
   );
